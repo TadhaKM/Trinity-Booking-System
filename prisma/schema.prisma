@@ -1,0 +1,119 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String
+  isOrganiser Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orders    Order[]
+  following SocietyFollower[]
+}
+
+model Society {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  category    String
+  imageUrl    String
+  location    String   // JSON string: { lat, lng }
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  events    Event[]
+  followers SocietyFollower[]
+}
+
+model SocietyFollower {
+  id        String   @id @default(cuid())
+  userId    String
+  societyId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  society Society @relation(fields: [societyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, societyId])
+}
+
+model Event {
+  id             String   @id @default(cuid())
+  societyId      String
+  title          String
+  description    String
+  startDate      DateTime
+  endDate        DateTime
+  location       String
+  locationCoords String   // JSON string: { lat, lng }
+  category       String
+  imageUrl       String
+  tags           String   // JSON string: string[]
+  organiserId    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  society     Society      @relation(fields: [societyId], references: [id], onDelete: Cascade)
+  ticketTypes TicketType[]
+  orders      Order[]
+}
+
+model TicketType {
+  id        String   @id @default(cuid())
+  eventId   String
+  name      String
+  price     Float
+  quantity  Int
+  available Int
+  createdAt DateTime @default(now())
+
+  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tickets Ticket[]
+}
+
+model Coupon {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  discountPercent Int
+  expiresAt       DateTime
+  maxUses         Int
+  usedCount       Int      @default(0)
+  createdAt       DateTime @default(now())
+}
+
+model Order {
+  id          String   @id @default(cuid())
+  userId      String
+  eventId     String
+  totalAmount Float
+  status      String   @default("CONFIRMED")
+  createdAt   DateTime @default(now())
+
+  user    User     @relation(fields: [userId], references: [id])
+  event   Event    @relation(fields: [eventId], references: [id])
+  tickets Ticket[]
+}
+
+model Ticket {
+  id           String    @id @default(cuid())
+  orderId      String
+  ticketTypeId String
+  price        Float
+  qrCode       String    @unique
+  checkedInAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  order      Order      @relation(fields: [orderId], references: [id])
+  ticketType TicketType @relation(fields: [ticketTypeId], references: [id])
+}
