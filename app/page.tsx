@@ -3,30 +3,19 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useAuthStore } from '@/lib/auth-store';
-import { Event, WeeklyUpdate } from '@/lib/types';
+import { Event } from '@/lib/types';
 import { formatDate, formatPrice } from '@/lib/utils';
 
 export default function HomePage() {
-  const user = useAuthStore((state) => state.user);
   const [events, setEvents] = useState<Event[]>([]);
-  const [weeklyUpdates, setWeeklyUpdates] = useState<WeeklyUpdate[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch all events
         const eventsRes = await fetch('/api/events');
         const eventsData = await eventsRes.json();
         setEvents(Array.isArray(eventsData) ? eventsData : []);
-
-        // Fetch weekly updates if user is logged in
-        if (user) {
-          const updatesRes = await fetch(`/api/users/${user.id}/weekly-updates`);
-          const updatesData = await updatesRes.json();
-          setWeeklyUpdates(Array.isArray(updatesData) ? updatesData : []);
-        }
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -35,7 +24,7 @@ export default function HomePage() {
     };
 
     fetchData();
-  }, [user]);
+  }, []);
 
   if (loading) {
     return (
@@ -52,7 +41,7 @@ export default function HomePage() {
         <h1 className="text-4xl md:text-5xl font-bold mb-4">
           Discover Trinity Events
         </h1>
-        <p className="text-xl mb-6 text-blue-100">
+        <p className="text-xl mb-6 text-white">
           Book tickets for societies, cultural events, and campus activities
         </p>
         <div className="flex flex-wrap gap-4">
@@ -70,58 +59,6 @@ export default function HomePage() {
           </Link>
         </div>
       </div>
-
-      {/* Weekly Updates Section */}
-      {user && weeklyUpdates.length > 0 && (
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Your Weekly Updates</h2>
-          <div className="space-y-6">
-            {weeklyUpdates.map((update) => (
-              <div
-                key={update.societyId}
-                className="bg-white rounded-lg shadow-md p-6"
-              >
-                <h3 className="text-xl font-semibold mb-4">
-                  {update.societyName}
-                </h3>
-                {update.events.length > 0 ? (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {update.events.map((event) => (
-                      <Link
-                        key={event.id}
-                        href={`/events/${event.id}`}
-                        className="flex gap-4 p-3 rounded-lg hover:bg-gray-50 transition"
-                      >
-                        <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden">
-                          <Image
-                            src={event.imageUrl}
-                            alt={event.title}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-sm truncate">
-                            {event.title}
-                          </h4>
-                          <p className="text-xs text-black">
-                            {formatDate(event.startDate)}
-                          </p>
-                          <p className="text-xs text-black">
-                            {event.location}
-                          </p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-black">No upcoming events this week</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* All Events Section */}
       <div>
@@ -149,12 +86,12 @@ export default function HomePage() {
                   fill
                   className="object-cover"
                 />
-                <div className="absolute top-3 right-3 bg-white px-3 py-1 rounded-full text-sm font-semibold">
+                <div className="absolute top-3 right-3 bg-white text-black px-3 py-1 rounded-full text-sm font-semibold">
                   {event.category}
                 </div>
               </div>
               <div className="p-5">
-                <h3 className="text-lg font-bold mb-2 line-clamp-1">
+                <h3 className="text-lg font-bold text-black mb-2 line-clamp-1">
                   {event.title}
                 </h3>
                 <p className="text-sm text-black mb-3 line-clamp-2">
@@ -204,7 +141,7 @@ export default function HomePage() {
               href={`/search?category=${encodeURIComponent(category)}`}
               className="bg-white rounded-lg p-6 text-center shadow-md hover:shadow-lg transition"
             >
-              <p className="font-semibold text-black-800">{category}</p>
+              <p className="font-semibold text-black">{category}</p>
             </Link>
           ))}
         </div>

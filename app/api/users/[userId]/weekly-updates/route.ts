@@ -8,10 +8,16 @@ export async function GET(
   try {
     const { userId } = params;
 
-    // Get societies the user follows
-    const followedSocieties = await prisma.societyFollower.findMany({
+    // Get societies the user follows (deduplicate by societyId)
+    const allFollowed = await prisma.societyFollower.findMany({
       where: { userId },
       include: { society: true },
+    });
+    const seen = new Set<string>();
+    const followedSocieties = allFollowed.filter((f) => {
+      if (seen.has(f.societyId)) return false;
+      seen.add(f.societyId);
+      return true;
     });
 
     // Get upcoming events for each followed society (next 7 days)
@@ -38,7 +44,11 @@ export async function GET(
         return {
           societyId: follower.societyId,
           societyName: follower.society.name,
-          events,
+          events: events.map((e) => ({
+            ...e,
+            tags: JSON.parse(e.tags),
+            locationCoords: JSON.parse(e.locationCoords),
+          })),
         };
       })
     );

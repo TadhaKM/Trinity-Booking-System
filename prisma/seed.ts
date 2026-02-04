@@ -419,6 +419,152 @@ async function main() {
     }),
   ]);
 
+  // Create THIS WEEK events (for weekly updates)
+  const thisWeekEvents = await Promise.all([
+    // DU Players — this week (student follows this)
+    prisma.event.create({
+      data: {
+        title: 'One-Act Play Festival',
+        description:
+          'Three original one-act plays written and performed by Trinity students. A celebration of new Irish writing.',
+        societyId: societies[0].id,
+        startDate: new Date('2026-02-06T19:00:00'),
+        endDate: new Date('2026-02-06T21:30:00'),
+        location: 'Samuel Beckett Theatre',
+        locationCoords: JSON.stringify({ lat: 53.34305, lng: -6.25475 }),
+        category: 'Arts & Culture',
+        imageUrl:
+          'https://images.unsplash.com/photo-1503095396549-807759245b35?w=800',
+        tags: JSON.stringify(['theatre', 'one-act', 'new writing']),
+        organiserId: users[1].id,
+        ticketTypes: {
+          create: [
+            { name: 'Standard', price: 10.0, quantity: 120, available: 120 },
+            { name: 'Student', price: 6.0, quantity: 80, available: 80 },
+          ],
+        },
+      },
+    }),
+    // DU Players — this week
+    prisma.event.create({
+      data: {
+        title: 'Backstage Workshop: Stage Lighting',
+        description:
+          'Learn the fundamentals of stage lighting design. Open to all skill levels.',
+        societyId: societies[0].id,
+        startDate: new Date('2026-02-08T14:00:00'),
+        endDate: new Date('2026-02-08T17:00:00'),
+        location: 'Players Theatre, Front Square',
+        locationCoords: JSON.stringify({ lat: 53.34385, lng: -6.2557 }),
+        category: 'Arts & Culture',
+        imageUrl:
+          'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800',
+        tags: JSON.stringify(['workshop', 'lighting', 'backstage']),
+        organiserId: users[1].id,
+        ticketTypes: {
+          create: [
+            { name: 'Participant', price: 0.0, quantity: 30, available: 30 },
+          ],
+        },
+      },
+    }),
+
+    // CS Society — this week (student follows this)
+    prisma.event.create({
+      data: {
+        title: 'Web Dev Workshop: Next.js & React',
+        description:
+          'Build a full-stack app from scratch using Next.js 14, React, and Tailwind CSS. Bring your laptop!',
+        societyId: societies[1].id,
+        startDate: new Date('2026-02-05T18:00:00'),
+        endDate: new Date('2026-02-05T20:00:00'),
+        location: "O'Reilly Institute, Room 013",
+        locationCoords: JSON.stringify({ lat: 53.34265, lng: -6.25185 }),
+        category: 'Academic',
+        imageUrl:
+          'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800',
+        tags: JSON.stringify(['web dev', 'nextjs', 'react', 'workshop']),
+        organiserId: users[3].id,
+        ticketTypes: {
+          create: [
+            { name: 'Participant', price: 0.0, quantity: 60, available: 60 },
+          ],
+        },
+      },
+    }),
+    // CS Society — this week
+    prisma.event.create({
+      data: {
+        title: 'Career Panel: Working in Big Tech',
+        description:
+          'Alumni from Google, Microsoft, and Stripe share advice on landing your first tech job.',
+        societyId: societies[1].id,
+        startDate: new Date('2026-02-07T17:00:00'),
+        endDate: new Date('2026-02-07T19:00:00'),
+        location: 'Hamilton Building, Lecture Theatre',
+        locationCoords: JSON.stringify({ lat: 53.34285, lng: -6.25095 }),
+        category: 'Academic',
+        imageUrl:
+          'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800',
+        tags: JSON.stringify(['career', 'tech', 'panel', 'alumni']),
+        organiserId: users[3].id,
+        ticketTypes: {
+          create: [
+            { name: 'Free Entry', price: 0.0, quantity: 100, available: 100 },
+          ],
+        },
+      },
+    }),
+
+    // Celtic Music — this week (organiser follows this)
+    prisma.event.create({
+      data: {
+        title: 'Open Mic Night',
+        description:
+          'Acoustic open mic — singers, musicians, poets all welcome. Sign up on the night!',
+        societyId: societies[2].id,
+        startDate: new Date('2026-02-06T20:00:00'),
+        endDate: new Date('2026-02-06T23:00:00'),
+        location: 'The Buttery',
+        locationCoords: JSON.stringify({ lat: 53.34365, lng: -6.25415 }),
+        category: 'Music',
+        imageUrl:
+          'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=800',
+        tags: JSON.stringify(['open mic', 'acoustic', 'live music']),
+        organiserId: users[1].id,
+        ticketTypes: {
+          create: [
+            { name: 'Entry', price: 0.0, quantity: 80, available: 80 },
+          ],
+        },
+      },
+    }),
+
+    // Phil — this week (organiser follows this)
+    prisma.event.create({
+      data: {
+        title: 'Debate: Should University Be Free?',
+        description:
+          'A lively debate on the future of higher education funding in Ireland. All welcome to speak from the floor.',
+        societyId: societies[3].id,
+        startDate: new Date('2026-02-09T19:00:00'),
+        endDate: new Date('2026-02-09T21:00:00'),
+        location: 'Graduates Memorial Building (GMB)',
+        locationCoords: JSON.stringify({ lat: 53.34395, lng: -6.25545 }),
+        category: 'Debate & Speaking',
+        imageUrl:
+          'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800',
+        tags: JSON.stringify(['debate', 'education', 'free speech']),
+        organiserId: users[3].id,
+        ticketTypes: {
+          create: [
+            { name: 'General Admission', price: 2.0, quantity: 100, available: 100 },
+          ],
+        },
+      },
+    }),
+  ]);
+
   // Create Coupons
   const coupons = await Promise.all([
     prisma.coupon.create({
@@ -480,9 +626,19 @@ async function main() {
   // Create society followers
   await prisma.societyFollower.createMany({
     data: [
+      // John Smith (student) follows DU Players + CS Society
       { userId: users[0].id, societyId: societies[0].id },
       { userId: users[0].id, societyId: societies[1].id },
+      // Sarah Jones (organiser) follows Celtic Music + Phil + Film Society
+      { userId: users[1].id, societyId: societies[2].id },
+      { userId: users[1].id, societyId: societies[3].id },
+      { userId: users[1].id, societyId: societies[5].id },
+      // Alice Murphy follows Celtic Music + Dance Society
       { userId: users[2].id, societyId: societies[2].id },
+      { userId: users[2].id, societyId: societies[4].id },
+      // Bob O'Brien (organiser) follows CS Society + Phil
+      { userId: users[3].id, societyId: societies[1].id },
+      { userId: users[3].id, societyId: societies[3].id },
     ],
   });
 
