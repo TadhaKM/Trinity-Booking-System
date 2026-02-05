@@ -3,10 +3,10 @@ import { prisma } from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
-    const { eventId } = params;
+    const { eventId } = await params;
 
     const event = await prisma.event.findUnique({
       where: { id: eventId },
@@ -22,10 +22,26 @@ export async function GET(
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 
+    // Safely parse JSON fields
+    let tags: string[] = [];
+    let locationCoords: any = null;
+
+    try {
+      tags = event.tags ? JSON.parse(event.tags) : [];
+    } catch {
+      tags = [];
+    }
+
+    try {
+      locationCoords = event.locationCoords ? JSON.parse(event.locationCoords) : null;
+    } catch {
+      locationCoords = null;
+    }
+
     return NextResponse.json({
       ...event,
-      tags: JSON.parse(event.tags),
-      locationCoords: JSON.parse(event.locationCoords),
+      tags,
+      locationCoords,
     });
   } catch (error) {
     console.error('Error fetching event:', error);

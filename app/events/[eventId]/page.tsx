@@ -94,7 +94,7 @@ function CheckoutModal({ event, ticketSelections, onClose }: CheckoutModalProps)
       <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-start mb-6">
-            <h2 className="text-2xl font-bold">Checkout</h2>
+            <h2 className="text-2xl font-bold text-black">Checkout</h2>
             <button
               onClick={onClose}
               className="text-black hover:text-black"
@@ -106,7 +106,7 @@ function CheckoutModal({ event, ticketSelections, onClose }: CheckoutModalProps)
           </div>
 
           <div className="mb-6">
-            <h3 className="font-semibold mb-2">{event.title}</h3>
+            <h3 className="font-semibold mb-2 text-black">{event.title}</h3>
             <p className="text-sm text-black">{formatDate(event.startDate)}</p>
           </div>
 
@@ -118,17 +118,17 @@ function CheckoutModal({ event, ticketSelections, onClose }: CheckoutModalProps)
               return (
                 <div key={selection.ticketTypeId} className="flex justify-between items-center">
                   <div>
-                    <p className="font-medium">{ticketType.name}</p>
+                    <p className="font-medium text-black">{ticketType.name}</p>
                     <p className="text-sm text-black">{selection.quantity}x {formatPrice(ticketType.price)}</p>
                   </div>
-                  <p className="font-semibold">{formatPrice(ticketType.price * selection.quantity)}</p>
+                  <p className="font-semibold text-black">{formatPrice(ticketType.price * selection.quantity)}</p>
                 </div>
               );
             })}
           </div>
 
           <div className="border-t border-gray-200 pt-4 mb-6">
-            <div className="flex justify-between mb-2">
+            <div className="flex justify-between mb-2 text-black">
               <span>Subtotal</span>
               <span>{formatPrice(subtotal)}</span>
             </div>
@@ -145,7 +145,7 @@ function CheckoutModal({ event, ticketSelections, onClose }: CheckoutModalProps)
               <span>{formatPrice(bookingFee)}</span>
             </div>
 
-            <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200">
+            <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200 text-black">
               <span>Total</span>
               <span>{formatPrice(total)}</span>
             </div>
@@ -153,14 +153,14 @@ function CheckoutModal({ event, ticketSelections, onClose }: CheckoutModalProps)
 
           {!appliedCoupon && (
             <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">Coupon Code</label>
+              <label className="block text-sm font-medium mb-2 text-black">Coupon Code</label>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                   placeholder="Enter code"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d3b66] text-black"
                 />
                 <button
                   onClick={handleApplyCoupon}
@@ -178,7 +178,7 @@ function CheckoutModal({ event, ticketSelections, onClose }: CheckoutModalProps)
           <button
             onClick={handleCheckout}
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400"
+            className="w-full bg-[#0d3b66] text-white py-3 rounded-lg font-semibold hover:bg-[#0a2f52] transition disabled:bg-gray-400"
           >
             {loading ? 'Processing...' : 'Complete Booking'}
           </button>
@@ -247,7 +247,7 @@ export default function EventDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0d3b66]"></div>
       </div>
     );
   }
@@ -257,7 +257,7 @@ export default function EventDetailPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-black mb-2">Event not found</h2>
-          <Link href="/" className="text-blue-600 hover:text-blue-700">Return to Home</Link>
+          <Link href="/" className="text-[#0d3b66] hover:text-[#1a5a96]">Return to Home</Link>
         </div>
       </div>
     );
@@ -275,7 +275,7 @@ export default function EventDetailPage() {
           </div>
           <div className="p-8">
             <div className="flex flex-wrap gap-2 mb-4">
-              <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+              <span className="bg-[#e8f0f8] text-[#0d3b66] px-3 py-1 rounded-full text-sm font-medium">
                 {event.category}
               </span>
               {(event.tags || []).map((tag) => (
@@ -285,12 +285,12 @@ export default function EventDetailPage() {
               ))}
             </div>
 
-            <h1 className="text-4xl font-bold mb-4">{event.title}</h1>
+            <h1 className="text-4xl font-bold mb-4 text-black">{event.title}</h1>
 
             {event.society && (
               <Link
                 href={`/societies/${event.societyId}`}
-                className="text-blue-600 hover:text-blue-700 font-semibold mb-6 inline-block"
+                className="text-[#0d3b66] hover:text-[#1a5a96] font-semibold mb-6 inline-block"
               >
                 {event.society.name}
               </Link>
@@ -302,7 +302,7 @@ export default function EventDetailPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <div>
-                  <p className="font-semibold">Date & Time</p>
+                  <p className="font-semibold text-black">Date & Time</p>
                   <p className="text-black">{formatDate(event.startDate)}</p>
                 </div>
               </div>
@@ -313,14 +313,14 @@ export default function EventDetailPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 <div>
-                  <p className="font-semibold">Location</p>
+                  <p className="font-semibold text-black">Location</p>
                   <p className="text-black">{event.location}</p>
                 </div>
               </div>
             </div>
 
             <div className="mt-8">
-              <h2 className="text-2xl font-bold mb-3">About This Event</h2>
+              <h2 className="text-2xl font-bold mb-3 text-black">About This Event</h2>
               <p className="text-black text-lg leading-relaxed">{event.description}</p>
             </div>
           </div>
@@ -328,15 +328,15 @@ export default function EventDetailPage() {
 
         {/* Tickets Section */}
         <div className="bg-white rounded-lg shadow-md p-8">
-          <h2 className="text-2xl font-bold mb-6">Select Tickets</h2>
+          <h2 className="text-2xl font-bold mb-6 text-black">Select Tickets</h2>
 
           <div className="space-y-4 mb-8">
             {event.ticketTypes.map((ticketType) => (
               <div key={ticketType.id} className="border border-gray-200 rounded-lg p-4">
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <h3 className="font-bold text-lg">{ticketType.name}</h3>
-                    <p className="text-2xl font-bold text-blue-600 mt-1">
+                    <h3 className="font-bold text-lg text-black">{ticketType.name}</h3>
+                    <p className="text-2xl font-bold text-[#0d3b66] mt-1">
                       {ticketType.price === 0 ? 'Free' : formatPrice(ticketType.price)}
                     </p>
                   </div>
@@ -354,11 +354,11 @@ export default function EventDetailPage() {
                       )
                     }
                     disabled={!ticketSelections[ticketType.id]}
-                    className="w-10 h-10 bg-gray-100 rounded-lg font-bold hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-10 h-10 bg-[#e8f0f8] text-[#0d3b66] rounded-lg font-bold hover:bg-[#d0e2f0] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     -
                   </button>
-                  <span className="w-12 text-center font-semibold">
+                  <span className="w-12 text-center font-semibold text-black">
                     {ticketSelections[ticketType.id] || 0}
                   </span>
                   <button
@@ -369,7 +369,7 @@ export default function EventDetailPage() {
                       )
                     }
                     disabled={(ticketSelections[ticketType.id] || 0) >= ticketType.available}
-                    className="w-10 h-10 bg-gray-100 rounded-lg font-bold hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-10 h-10 bg-[#e8f0f8] text-[#0d3b66] rounded-lg font-bold hover:bg-[#d0e2f0] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     +
                   </button>
@@ -381,7 +381,7 @@ export default function EventDetailPage() {
           <button
             onClick={handleBookNow}
             disabled={totalSelected === 0}
-            className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="w-full bg-[#0d3b66] text-white py-4 rounded-lg font-bold text-lg hover:bg-[#0a2f52] transition disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             {totalSelected === 0 ? 'Select Tickets' : `Book ${totalSelected} Ticket${totalSelected !== 1 ? 's' : ''}`}
           </button>

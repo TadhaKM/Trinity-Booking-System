@@ -5,9 +5,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Event } from '@/lib/types';
 import { formatDate, formatPrice } from '@/lib/utils';
+import BookingModal from '@/components/BookingModal';
 
 export default function HomePage() {
   const [events, setEvents] = useState<Event[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,23 +39,23 @@ export default function HomePage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-8 md:p-12 mb-12 text-white">
+      <div className="bg-gradient-to-r from-[#0d3b66] to-[#1a5a96] rounded-2xl p-8 md:p-12 mb-12 text-white shadow-lg">
         <h1 className="text-4xl md:text-5xl font-bold mb-4">
           Discover Trinity Events
         </h1>
-        <p className="text-xl mb-6 text-white">
+        <p className="text-xl mb-6 text-blue-100">
           Book tickets for societies, cultural events, and campus activities
         </p>
         <div className="flex flex-wrap gap-4">
           <Link
             href="/campus-world"
-            className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition"
+            className="bg-white text-[#0d3b66] px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition"
           >
             Explore Campus World
           </Link>
           <Link
             href="/search"
-            className="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-400 transition"
+            className="bg-white/20 text-white border border-white/30 px-6 py-3 rounded-lg font-semibold hover:bg-white/30 transition"
           >
             Search Events
           </Link>
@@ -66,7 +68,7 @@ export default function HomePage() {
           <h2 className="text-2xl font-bold">Upcoming Events</h2>
           <Link
             href="/search"
-            className="text-blue-600 hover:text-blue-700 font-semibold"
+            className="text-[#0d3b66] hover:text-[#1a5a96] font-semibold"
           >
             View All
           </Link>
@@ -74,10 +76,10 @@ export default function HomePage() {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {events.slice(0, 6).map((event) => (
-            <Link
+            <div
               key={event.id}
-              href={`/events/${event.id}`}
-              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition"
+              onClick={() => setSelectedEvent(event)}
+              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition cursor-pointer"
             >
               <div className="relative h-48">
                 <Image
@@ -106,7 +108,7 @@ export default function HomePage() {
                   </div>
                   <div className="text-right">
                     {event.ticketTypes && event.ticketTypes.length > 0 && (
-                      <p className="font-bold text-blue-600">
+                      <p className="font-bold text-[#0d3b66]">
                         {event.ticketTypes[0].price === 0
                           ? 'Free'
                           : `From ${formatPrice(
@@ -119,10 +121,19 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       </div>
+
+      {/* Booking Modal */}
+      {selectedEvent && (
+        <BookingModal
+          event={selectedEvent}
+          isOpen={selectedEvent !== null}
+          onClose={() => setSelectedEvent(null)}
+        />
+      )}
 
       {/* Categories Section */}
       <div className="mt-12">
@@ -139,9 +150,9 @@ export default function HomePage() {
             <Link
               key={category}
               href={`/search?category=${encodeURIComponent(category)}`}
-              className="bg-white rounded-lg p-6 text-center shadow-md hover:shadow-lg transition"
+              className="bg-white rounded-lg p-6 text-center shadow-md hover:shadow-lg hover:border-[#0d3b66] border border-transparent transition"
             >
-              <p className="font-semibold text-black">{category}</p>
+              <p className="font-semibold text-[#0d3b66]">{category}</p>
             </Link>
           ))}
         </div>

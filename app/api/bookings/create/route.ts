@@ -6,6 +6,52 @@ export async function POST(request: NextRequest) {
   try {
     const { userId, eventId, ticketSelections, couponCode } = await request.json();
 
+    // Validate required fields
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'User ID is required. Please log in again.' },
+        { status: 400 }
+      );
+    }
+
+    if (!eventId) {
+      return NextResponse.json(
+        { error: 'Event ID is required.' },
+        { status: 400 }
+      );
+    }
+
+    if (!ticketSelections || ticketSelections.length === 0) {
+      return NextResponse.json(
+        { error: 'Please select at least one ticket.' },
+        { status: 400 }
+      );
+    }
+
+    // Verify user exists
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found. Please log in again.' },
+        { status: 404 }
+      );
+    }
+
+    // Verify event exists
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+    });
+
+    if (!event) {
+      return NextResponse.json(
+        { error: 'Event not found.' },
+        { status: 404 }
+      );
+    }
+
     // Validate ticket availability
     for (const selection of ticketSelections) {
       const ticketType = await prisma.ticketType.findUnique({
@@ -88,10 +134,7 @@ export async function POST(request: NextRequest) {
             create: ticketSelections.flatMap((selection: any) =>
               Array.from({ length: selection.quantity }, () => ({
                 ticketTypeId: selection.ticketTypeId,
-                price:
-                  tx.ticketType
-                    .findUnique({ where: { id: selection.ticketTypeId } })
-                    .then((tt) => tt?.price || 0) as any,
+                price: 0, // Will be updated below
                 qrCode: generateQRCode(),
               }))
             ),
@@ -119,10 +162,27 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(order);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating booking:', error);
+
+    // Handle specific Prisma errors
+    if (error.code === 'P2002') {
+      return NextResponse.json(
+        { error: 'A duplicate booking was detected. Please try again.' },
+        { status: 400 }
+      );
+    }
+
+    if (error.code === 'P2003') {
+      return NextResponse.json(
+        { error: 'Invalid reference: The user, event, or ticket type does not exist.' },
+        { status: 400 }
+      );
+    }
+
+    const errorMessage = error.message || 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to create booking' },
+      { error: `Failed to create booking: ${errorMessage}` },
       { status: 500 }
     );
   }

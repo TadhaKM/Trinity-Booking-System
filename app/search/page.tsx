@@ -2,16 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import Image from 'next/image';
 import { Event } from '@/lib/types';
 import { formatDate, formatPrice } from '@/lib/utils';
+import BookingModal from '@/components/BookingModal';
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category');
 
   const [events, setEvents] = useState<Event[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(categoryParam || '');
   const [loading, setLoading] = useState(true);
@@ -133,10 +134,10 @@ export default function SearchPage() {
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {events.map((event) => (
-              <Link
+              <div
                 key={event.id}
-                href={`/events/${event.id}`}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition"
+                onClick={() => setSelectedEvent(event)}
+                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition cursor-pointer"
               >
                 <div className="relative h-48">
                   <Image
@@ -183,10 +184,19 @@ export default function SearchPage() {
                     </div>
                   </div>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </div>
+      )}
+
+      {/* Booking Modal */}
+      {selectedEvent && (
+        <BookingModal
+          event={selectedEvent}
+          isOpen={selectedEvent !== null}
+          onClose={() => setSelectedEvent(null)}
+        />
       )}
     </div>
   );

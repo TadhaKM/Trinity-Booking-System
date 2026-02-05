@@ -3,49 +3,55 @@
 @tailwind utilities;
 
 :root {
-  --background: 0 0% 100%;
+  /* TCD-inspired color scheme - Blue and White */
+  --background: 210 50% 98%; /* Very light blue-white background */
   --foreground: 0 0% 0%;
-  --card: 0 0% 100%;
+  --card: 0 0% 100%; /* Pure white cards */
   --card-foreground: 0 0% 0%;
   --popover: 0 0% 100%;
   --popover-foreground: 0 0% 0%;
-  --primary: 221.2 83.2% 53.3%;
+  --primary: 213 94% 30%; /* TCD Navy Blue #0d3b66 */
   --primary-foreground: 0 0% 100%;
-  --secondary: 210 40% 96.1%;
+  --secondary: 210 60% 95%; /* Light blue tint */
   --secondary-foreground: 0 0% 0%;
   --muted: 210 40% 96.1%;
   --muted-foreground: 0 0% 0%;
-  --accent: 210 40% 96.1%;
+  --accent: 210 80% 92%; /* Soft blue accent */
   --accent-foreground: 0 0% 0%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 100%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 221.2 83.2% 53.3%;
+  --border: 210 40% 90%;
+  --input: 210 40% 94%;
+  --ring: 213 94% 30%;
   --radius: 0.5rem;
+
+  /* TCD Brand Colors */
+  --tcd-navy: 213 94% 30%; /* #0d3b66 */
+  --tcd-blue: 210 100% 40%; /* #0066cc */
+  --tcd-light-blue: 210 60% 95%; /* Light blue background */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: 222.2 84% 4.9%;
+    --background: 213 50% 10%; /* Dark navy background */
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 213 50% 15%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 213 50% 15%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
+    --primary: 210 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 213 40% 20%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
+    --muted: 213 40% 20%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 213 40% 25%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --border: 213 40% 25%;
+    --input: 213 40% 20%;
+    --ring: 210 100% 50%;
   }
 }
 
@@ -53,12 +59,37 @@
   @apply border-border;
 }
 
+html {
+  color-scheme: light;
+}
+
 body {
-  @apply bg-background text-foreground;
+  @apply bg-background;
+  color: #000000;
+}
+
+/* Ensure all text is black by default */
+h1, h2, h3, h4, h5, h6, p, span, label, div {
+  color: inherit;
+}
+
+/* Override any grey text colors */
+.text-gray-500, .text-gray-600, .text-gray-700 {
+  color: #000000 !important;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+/* TCD Brand Gradient */
+.tcd-gradient {
+  background: linear-gradient(135deg, hsl(213, 94%, 30%) 0%, hsl(210, 100%, 40%) 100%);
+}
+
+/* Light blue section backgrounds */
+.bg-tcd-light {
+  background-color: hsl(210, 60%, 97%);
 }

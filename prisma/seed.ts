@@ -45,75 +45,166 @@ async function main() {
     }),
   ]);
 
-  // Create Societies
-  const societies = await Promise.all([
-    prisma.society.create({
-      data: {
-        name: 'DU Players',
-        description:
-          "Trinity's premier drama society, staging productions in the Samuel Beckett Theatre.",
-        category: 'Arts & Culture',
-        imageUrl:
-          'https://images.unsplash.com/photo-1503095396549-807759245b35?w=800',
-        location: JSON.stringify({ lat: 53.34305, lng: -6.25475 }),
-      },
-    }),
-    prisma.society.create({
-      data: {
-        name: 'Computer Science Society',
-        description:
-          'Promoting tech culture through hackathons, talks, and workshops.',
-        category: 'Academic',
-        imageUrl:
-          'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800',
-        location: JSON.stringify({ lat: 53.34265, lng: -6.25185 }),
-      },
-    }),
-    prisma.society.create({
-      data: {
-        name: 'Celtic Music Society',
-        description:
-          'Celebrating Irish traditional music with weekly sessions and concerts.',
-        category: 'Music',
-        imageUrl:
-          'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=800',
-        location: JSON.stringify({ lat: 53.34365, lng: -6.25415 }),
-      },
-    }),
-    prisma.society.create({
-      data: {
-        name: 'Philosophical Society',
-        description:
-          "Ireland's oldest student society, hosting debates and speaker events since 1683.",
-        category: 'Debate & Speaking',
-        imageUrl:
-          'https://images.unsplash.com/photo-1574168104291-ac4e706a3adb?w=800',
-        location: JSON.stringify({ lat: 53.34395, lng: -6.25545 }),
-      },
-    }),
-    prisma.society.create({
-      data: {
-        name: 'Dance Society',
-        description:
-          'From ballroom to hip-hop, showcasing diverse dance styles.',
-        category: 'Sports & Fitness',
-        imageUrl:
-          'https://images.unsplash.com/photo-1504609813442-a8924e83f76e?w=800',
-        location: JSON.stringify({ lat: 53.34435, lng: -6.2559 }),
-      },
-    }),
-    prisma.society.create({
-      data: {
-        name: 'Film Society',
-        description:
-          'Weekly screenings, film production workshops, and cinema trips.',
-        category: 'Arts & Culture',
-        imageUrl:
-          'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800',
-        location: JSON.stringify({ lat: 53.34215, lng: -6.25105 }),
-      },
-    }),
-  ]);
+  // Create Societies - comprehensive list of 100+ TCD societies
+  const societyData = [
+    // Original 6 societies
+    { name: 'DU Players', description: "Trinity's premier drama society, staging productions in the Samuel Beckett Theatre.", category: 'Arts & Culture', imageUrl: 'https://images.unsplash.com/photo-1503095396549-807759245b35?w=800' },
+    { name: 'Computer Science Society', description: 'Promoting tech culture through hackathons, talks, and workshops.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800' },
+    { name: 'Celtic Music Society', description: 'Celebrating Irish traditional music with weekly sessions and concerts.', category: 'Music', imageUrl: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=800' },
+    { name: 'Philosophical Society', description: "Ireland's oldest student society, hosting debates and speaker events since 1683.", category: 'Debate & Speaking', imageUrl: 'https://images.unsplash.com/photo-1574168104291-ac4e706a3adb?w=800' },
+    { name: 'Dance Society', description: 'From ballroom to hip-hop, showcasing diverse dance styles.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1504609813442-a8924e83f76e?w=800' },
+    { name: 'Film Society', description: 'Weekly screenings, film production workshops, and cinema trips.', category: 'Arts & Culture', imageUrl: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800' },
+
+    // Cultural & International Societies
+    { name: 'Trinity South Asian Society', description: 'Celebrating South Asian culture through Diwali, Holi, cultural nights, and community events.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1514222134-b57cbb8ce073?w=800' },
+    { name: 'African Caribbean Society', description: 'Promoting African and Caribbean culture, heritage, and community.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=800' },
+    { name: 'Chinese Society', description: 'Bringing Chinese culture to Trinity through events, festivals, and language exchange.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1523731407965-2430cd12f5e4?w=800' },
+    { name: 'Middle Eastern Society', description: 'Celebrating Middle Eastern culture, cuisine, and traditions.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1466442929976-97f336a657be?w=800' },
+    { name: 'Latin American Society', description: 'Promoting Latin American culture through salsa nights, language exchange, and fiestas.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?w=800' },
+    { name: 'Japanese Society', description: 'Exploring Japanese culture through anime screenings, language classes, and cultural events.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1528164344705-47542687000d?w=800' },
+    { name: 'Korean Society', description: 'K-culture enthusiasts unite! K-pop, Korean food, and language exchange.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1517154421773-0529f29ea451?w=800' },
+    { name: 'European Society', description: 'Celebrating European diversity through cultural exchanges and EU-focused events.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1485081669829-bacb8c7bb1f3?w=800' },
+    { name: 'American Society', description: 'Connecting American students and celebrating US culture at Trinity.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?w=800' },
+    { name: 'French Society', description: 'French language, culture, wine tastings, and cinema.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800' },
+    { name: 'German Society', description: 'German language practice, Oktoberfest, and cultural events.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=800' },
+    { name: 'Spanish Society', description: 'Spanish and Hispanic culture through tapas nights and language exchange.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=800' },
+    { name: 'Italian Society', description: 'Italian culture, language, food, and film screenings.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=800' },
+    { name: 'Polish Society', description: 'Polish culture, traditions, and community events.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1519197924294-4ba991a11128?w=800' },
+    { name: 'Indian Society', description: 'Celebrating Indian festivals, cuisine, and cultural heritage.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=800' },
+    { name: 'Pakistani Society', description: 'Pakistani culture, food, and community building.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1586076844275-f0b6e7cd3b7f?w=800' },
+    { name: 'Nigerian Society', description: 'Nigerian culture, Afrobeats, and community events.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1489749798305-4fea3ae63d43?w=800' },
+    { name: 'Malaysian & Singaporean Society', description: 'SEA culture, food festivals, and community events.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=800' },
+    { name: 'Thai Society', description: 'Thai culture, Songkran celebrations, and food events.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1528181304800-259b08848526?w=800' },
+    { name: 'Vietnamese Society', description: 'Vietnamese culture, Tet celebrations, and pho nights.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1528127269322-539801943592?w=800' },
+
+    // Academic & Professional Societies
+    { name: 'Law Society', description: 'Mooting competitions, legal debates, and career networking.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800' },
+    { name: 'Medical Society', description: 'Healthcare talks, anatomy workshops, and medical career events.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800' },
+    { name: 'Engineering Society', description: 'Engineering projects, industry talks, and site visits.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800' },
+    { name: 'Business Society', description: 'Entrepreneurship, networking, and business case competitions.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800' },
+    { name: 'Economics Society', description: 'Economic debates, trading simulations, and finance talks.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800' },
+    { name: 'Physics Society', description: 'Physics demonstrations, stargazing nights, and science talks.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800' },
+    { name: 'Chemistry Society', description: 'Lab demonstrations, chemistry magic shows, and industry visits.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1603126857599-f6e157fa2fe6?w=800' },
+    { name: 'Biology Society', description: 'Nature walks, lab tours, and biology research talks.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1530026405186-ed1f139313f8?w=800' },
+    { name: 'Mathematics Society', description: 'Puzzle nights, math olympiad prep, and problem-solving workshops.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800' },
+    { name: 'History Society', description: 'Historical debates, museum trips, and guest lectures.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1461360370896-922624d12a74?w=800' },
+    { name: 'Psychology Society', description: 'Psychology experiments, mental health awareness, and career talks.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800' },
+    { name: 'Philosophy Society', description: 'Philosophical discussions, ethics debates, and reading groups.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800' },
+    { name: 'Political Science Society', description: 'Political debates, election simulations, and policy discussions.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800' },
+    { name: 'Data Science Society', description: 'Data analytics workshops, machine learning projects, and hackathons.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800' },
+    { name: 'Biomedical Engineering Society', description: 'Medical device innovation and healthcare technology.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=800' },
+    { name: 'Environmental Society', description: 'Sustainability initiatives, climate action, and nature conservation.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800' },
+    { name: 'Genetics Society', description: 'Genomics research, CRISPR workshops, and biotech careers.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1628595351029-c2bf17511435?w=800' },
+    { name: 'Pharmacy Society', description: 'Pharmaceutical science, drug discovery, and healthcare careers.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1585435557343-3b092031a831?w=800' },
+    { name: 'Dental Society', description: 'Dental health awareness and dental career networking.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=800' },
+    { name: 'Veterinary Society', description: 'Animal welfare, veterinary careers, and pet care workshops.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800' },
+    { name: 'Architecture Society', description: 'Design workshops, building tours, and architectural competitions.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=800' },
+
+    // Arts & Creative Societies
+    { name: 'Photography Society', description: 'Photo walks, darkroom workshops, and exhibitions.', category: 'Arts & Culture', imageUrl: 'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=800' },
+    { name: 'Art Society', description: 'Life drawing, painting workshops, and gallery visits.', category: 'Arts & Culture', imageUrl: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800' },
+    { name: 'Creative Writing Society', description: 'Writing workshops, poetry nights, and publication opportunities.', category: 'Arts & Culture', imageUrl: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800' },
+    { name: 'Literary Society', description: 'Book clubs, author talks, and literary discussions.', category: 'Arts & Culture', imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800' },
+    { name: 'Journalism Society', description: 'Student newspaper, media workshops, and journalism careers.', category: 'Arts & Culture', imageUrl: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800' },
+    { name: 'Broadcasting Society', description: 'Radio shows, podcasting, and media production.', category: 'Arts & Culture', imageUrl: 'https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=800' },
+    { name: 'Comedy Society', description: 'Stand-up nights, improv workshops, and comedy writing.', category: 'Arts & Culture', imageUrl: 'https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=800' },
+    { name: 'Fashion Society', description: 'Fashion shows, styling workshops, and industry networking.', category: 'Arts & Culture', imageUrl: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=800' },
+    { name: 'Animation Society', description: '2D and 3D animation workshops and film screenings.', category: 'Arts & Culture', imageUrl: 'https://images.unsplash.com/photo-1534972195531-d756b9bfa9f2?w=800' },
+    { name: 'Graphic Design Society', description: 'Design workshops, portfolio reviews, and creative challenges.', category: 'Arts & Culture', imageUrl: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?w=800' },
+
+    // Music Societies
+    { name: 'Orchestra Society', description: 'Classical music performances and orchestral concerts.', category: 'Music', imageUrl: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=800' },
+    { name: 'Choral Society', description: 'Choir performances, Christmas concerts, and singing workshops.', category: 'Music', imageUrl: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=800' },
+    { name: 'Jazz Society', description: 'Jazz nights, jam sessions, and improvisation workshops.', category: 'Music', imageUrl: 'https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=800' },
+    { name: 'Rock & Alternative Society', description: 'Battle of the bands, gig nights, and rock music appreciation.', category: 'Music', imageUrl: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800' },
+    { name: 'Electronic Music Society', description: 'DJ workshops, electronic music production, and club nights.', category: 'Music', imageUrl: 'https://images.unsplash.com/photo-1571266028243-d220c6a8b0e4?w=800' },
+    { name: 'A Cappella Society', description: 'A cappella performances and vocal arrangement workshops.', category: 'Music', imageUrl: 'https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=800' },
+    { name: 'Musical Theatre Society', description: 'Musical productions, singing workshops, and show trips.', category: 'Music', imageUrl: 'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=800' },
+    { name: 'Hip Hop Society', description: 'Hip hop culture, rap battles, and dance sessions.', category: 'Music', imageUrl: 'https://images.unsplash.com/photo-1547355253-ff0740f6e8c1?w=800' },
+
+    // Sports & Fitness Societies
+    { name: 'Rowing Club', description: 'Competitive rowing on the Liffey and fitness training.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1519505907962-0a6cb0167c73?w=800' },
+    { name: 'Rugby Club', description: 'Rugby training, matches, and social events.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1544298621-a28b8d14c02e?w=800' },
+    { name: 'Football Club', description: 'Soccer training, leagues, and tournaments.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800' },
+    { name: 'GAA Club', description: 'Gaelic football and hurling training and matches.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=800' },
+    { name: 'Basketball Club', description: 'Basketball training, leagues, and tournaments.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800' },
+    { name: 'Tennis Club', description: 'Tennis coaching, tournaments, and social tennis.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800' },
+    { name: 'Swimming Club', description: 'Swimming training, competitions, and water polo.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=800' },
+    { name: 'Athletics Club', description: 'Track and field training and competitions.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1461896836934-49b71db6e8fa?w=800' },
+    { name: 'Cycling Club', description: 'Road cycling, mountain biking, and cycling trips.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1541625602330-2277a4c46182?w=800' },
+    { name: 'Mountaineering Club', description: 'Hill walking, rock climbing, and outdoor adventures.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800' },
+    { name: 'Sailing Club', description: 'Dinghy sailing, yacht racing, and sailing trips.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1500514966906-fe245eea9344?w=800' },
+    { name: 'Surf Club', description: 'Surfing trips, lessons, and beach weekends.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=800' },
+    { name: 'Yoga Society', description: 'Yoga classes, meditation, and wellness workshops.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800' },
+    { name: 'Martial Arts Society', description: 'Karate, judo, taekwondo, and self-defense classes.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?w=800' },
+    { name: 'Boxing Club', description: 'Boxing training, fitness classes, and sparring sessions.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=800' },
+    { name: 'Fencing Club', description: 'Fencing training and competitive fencing.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1558636508-e0db3814bd1d?w=800' },
+    { name: 'Hockey Club', description: 'Field hockey training and matches.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1580748142506-d13db5e31b65?w=800' },
+    { name: 'Cricket Club', description: 'Cricket training, matches, and social events.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800' },
+    { name: 'Volleyball Club', description: 'Indoor and beach volleyball training and tournaments.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=800' },
+    { name: 'Badminton Club', description: 'Badminton training and social games.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800' },
+    { name: 'Table Tennis Club', description: 'Table tennis training and tournaments.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1558657252635-9b11e8aa5254?w=800' },
+    { name: 'Triathlon Club', description: 'Triathlon training and competitions.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=800' },
+    { name: 'Equestrian Club', description: 'Horse riding lessons and equestrian events.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=800' },
+    { name: 'Golf Club', description: 'Golf outings, lessons, and tournaments.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=800' },
+    { name: 'Ultimate Frisbee Club', description: 'Ultimate frisbee training and tournaments.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1472745942893-4b9f730c7668?w=800' },
+    { name: 'Esports Society', description: 'Competitive gaming, tournaments, and LAN parties.', category: 'Sports & Fitness', imageUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800' },
+
+    // Debate & Speaking Societies
+    { name: 'Historical Society', description: 'Debates on historical topics and speaker events.', category: 'Debate & Speaking', imageUrl: 'https://images.unsplash.com/photo-1461360370896-922624d12a74?w=800' },
+    { name: 'Model United Nations Society', description: 'MUN conferences, diplomatic simulations, and debates.', category: 'Debate & Speaking', imageUrl: 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800' },
+    { name: 'Law Society Debating', description: 'Legal debates, mooting, and advocacy training.', category: 'Debate & Speaking', imageUrl: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800' },
+    { name: 'Public Speaking Society', description: 'Public speaking workshops and Toastmasters-style meetings.', category: 'Debate & Speaking', imageUrl: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800' },
+
+    // Religious & Spiritual Societies
+    { name: 'Christian Union', description: 'Christian fellowship, Bible study, and spiritual events.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1438232992991-995b7058bbb3?w=800' },
+    { name: 'Islamic Society', description: 'Muslim community, prayer facilities, and Islamic events.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1564769625905-50e93615e769?w=800' },
+    { name: 'Jewish Society', description: 'Jewish culture, Shabbat dinners, and community events.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1577401239170-897942555fb3?w=800' },
+    { name: 'Hindu Society', description: 'Hindu festivals, puja ceremonies, and cultural events.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1544006659-f0b21884ce1d?w=800' },
+    { name: 'Buddhist Society', description: 'Meditation sessions, Buddhist teachings, and retreats.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800' },
+    { name: 'Sikh Society', description: 'Sikh community, langar, and cultural celebrations.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800' },
+
+    // Special Interest Societies
+    { name: 'Chess Society', description: 'Chess tournaments, lessons, and casual play.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1529699211952-734e80c4d42b?w=800' },
+    { name: 'Board Games Society', description: 'Board game nights, strategy games, and tabletop RPGs.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=800' },
+    { name: 'Anime & Manga Society', description: 'Anime screenings, manga reading, and cosplay events.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800' },
+    { name: 'Video Games Society', description: 'Gaming sessions, tournaments, and game development.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1493711662062-fa541f7f3d24?w=800' },
+    { name: 'Harry Potter Society', description: 'Wizarding world events, trivia nights, and movie marathons.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1551269901-5c5e14c25df7?w=800' },
+    { name: 'Science Fiction & Fantasy Society', description: 'Sci-fi and fantasy book clubs, screenings, and conventions.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800' },
+    { name: 'Wine Society', description: 'Wine tastings, vineyard trips, and sommelier workshops.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=800' },
+    { name: 'Food Society', description: 'Food tours, cooking workshops, and restaurant visits.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800' },
+    { name: 'Coffee Society', description: 'Coffee tastings, barista workshops, and cafe hopping.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800' },
+    { name: 'Vegetarian Society', description: 'Plant-based cooking, vegan events, and ethical eating.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800' },
+    { name: 'Cocktail Society', description: 'Mixology workshops, cocktail nights, and bar tours.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800' },
+    { name: 'Travel Society', description: 'Travel talks, trip planning, and group adventures.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800' },
+    { name: 'Astronomy Society', description: 'Stargazing nights, telescope sessions, and space talks.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=800' },
+    { name: 'Robotics Society', description: 'Robot building, competitions, and AI workshops.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800' },
+    { name: 'Entrepreneurship Society', description: 'Startup pitches, entrepreneurship workshops, and networking.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800' },
+    { name: 'Investment Society', description: 'Stock trading simulations, investment workshops, and finance talks.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=800' },
+    { name: 'Consulting Society', description: 'Case competitions, consulting workshops, and career prep.', category: 'Academic', imageUrl: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800' },
+
+    // LGBTQ+ & Identity Societies
+    { name: 'LGBTQ+ Society', description: 'LGBTQ+ community, pride events, and support networks.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1620121692029-d088224ddc74?w=800' },
+    { name: 'Gender Equality Society', description: 'Gender equality advocacy, workshops, and awareness events.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1573164713988-8665fc963095?w=800' },
+    { name: 'Feminist Society', description: "Women's rights, feminist theory, and activism.", category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800' },
+
+    // Charity & Volunteering
+    { name: 'Volunteer Society', description: 'Volunteering opportunities, charity drives, and community service.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=800' },
+    { name: 'Amnesty International Society', description: 'Human rights advocacy and awareness campaigns.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800' },
+    { name: 'UNICEF Society', description: "Children's rights advocacy and fundraising.", category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800' },
+    { name: 'Red Cross Society', description: 'First aid training, blood drives, and humanitarian aid.', category: 'Social', imageUrl: 'https://images.unsplash.com/photo-1584744982491-665216d95f8b?w=800' },
+  ];
+
+  const societies = await Promise.all(
+    societyData.map((data, index) =>
+      prisma.society.create({
+        data: {
+          ...data,
+          location: JSON.stringify({ lat: 53.343 + (index * 0.0001), lng: -6.254 + (index * 0.0001) }),
+        },
+      })
+    )
+  );
 
   // Create Events at real TCD buildings
   const events = await Promise.all([

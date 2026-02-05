@@ -30,13 +30,13 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <nav className="bg-[#0d3b66] border-b border-[#0a2f52] sticky top-0 z-50 shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
-              <span className="text-2xl font-bold text-blue-600">TCD</span>
-              <span className="text-2xl font-bold text-black ml-1">
+              <span className="text-2xl font-bold text-white">TCD</span>
+              <span className="text-2xl font-bold text-blue-200 ml-1">
                 Tickets
               </span>
             </Link>
@@ -49,8 +49,8 @@ export default function Navbar() {
                 href={item.href}
                 className={`px-4 py-2 rounded-lg font-medium transition ${
                   pathname === item.href
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'text-black hover:bg-gray-50'
+                    ? 'bg-white/20 text-white'
+                    : 'text-blue-100 hover:bg-white/10 hover:text-white'
                 }`}
               >
                 {item.label}
@@ -63,18 +63,18 @@ export default function Navbar() {
               <div className="flex items-center gap-3">
                 <Link
                   href="/profile"
-                  className="flex items-center gap-2 hover:bg-gray-50 rounded-lg px-3 py-2 transition"
+                  className="flex items-center gap-2 hover:bg-white/10 rounded-lg px-3 py-2 transition"
                 >
-                  <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                  <div className="w-8 h-8 bg-white text-[#0d3b66] rounded-full flex items-center justify-center text-sm font-semibold">
                     {getInitials(user.name)}
                   </div>
-                  <span className="hidden md:block font-medium text-black">
+                  <span className="hidden md:block font-medium text-white">
                     {user.name}
                   </span>
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-black hover:text-black font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition"
+                  className="text-blue-100 hover:text-white font-medium px-4 py-2 rounded-lg hover:bg-white/10 transition"
                 >
                   Logout
                 </button>
@@ -82,7 +82,7 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/login"
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition"
+                className="bg-white text-[#0d3b66] px-6 py-2 rounded-lg font-medium hover:bg-blue-50 transition"
               >
                 Login
               </Link>
@@ -92,7 +92,7 @@ export default function Navbar() {
       </div>
 
       {/* Mobile Menu */}
-      <div className="md:hidden border-t border-gray-200 px-4 py-3">
+      <div className="md:hidden border-t border-white/20 px-4 py-3 bg-[#0a2f52]">
         <div className="flex flex-wrap gap-2">
           {navItems.map((item) => (
             <Link
@@ -100,8 +100,8 @@ export default function Navbar() {
               href={item.href}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
                 pathname === item.href
-                  ? 'bg-blue-50 text-blue-600'
-                  : 'text-black hover:bg-gray-50'
+                  ? 'bg-white/20 text-white'
+                  : 'text-blue-100 hover:bg-white/10 hover:text-white'
               }`}
             >
               {item.label}

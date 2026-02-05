@@ -5,11 +5,21 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Event } from '@/lib/types';
 import { formatDate, formatPrice } from '@/lib/utils';
+import BookingModal from '@/components/BookingModal';
 
 export default function CampusWorldPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [bookingEvent, setBookingEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // TCD campus bounds for positioning markers
+  const mapBounds = {
+    north: 53.3455,
+    south: 53.3420,
+    west: -6.2600,
+    east: -6.2490,
+  };
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -26,6 +36,13 @@ export default function CampusWorldPage() {
 
     fetchEvents();
   }, []);
+
+  // Convert lat/lng to percentage position on the map
+  const getMarkerPosition = (coords: { lat: number; lng: number }) => {
+    const left = ((coords.lng - mapBounds.west) / (mapBounds.east - mapBounds.west)) * 100;
+    const top = ((mapBounds.north - coords.lat) / (mapBounds.north - mapBounds.south)) * 100;
+    return { left: `${Math.max(5, Math.min(95, left))}%`, top: `${Math.max(5, Math.min(95, top))}%` };
+  };
 
   if (loading) {
     return (
@@ -57,10 +74,28 @@ export default function CampusWorldPage() {
             title="Trinity College Dublin Campus Map"
           />
 
+          {/* Event marker overlay - shows when an event is selected */}
+          {selectedEvent && selectedEvent.locationCoords && (
+            <div
+              className="absolute z-10 transform -translate-x-1/2 -translate-y-full pointer-events-none"
+              style={getMarkerPosition(selectedEvent.locationCoords)}
+            >
+              <div className="flex flex-col items-center animate-bounce">
+                <div className="bg-blue-600 text-white px-3 py-2 rounded-lg shadow-lg max-w-48 text-center mb-1">
+                  <p className="font-semibold text-sm truncate">{selectedEvent.title}</p>
+                  <p className="text-xs opacity-90">{selectedEvent.location}</p>
+                </div>
+                <svg className="w-8 h-8 text-blue-600 drop-shadow-lg" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>
+              </div>
+            </div>
+          )}
+
           {/* Event list overlay */}
           {events.length > 0 && (
             <div className="absolute bottom-6 left-6 bg-white rounded-lg shadow-lg p-4 max-h-48 overflow-y-auto">
-              <h3 className="font-semibold mb-2 text-sm">Events on Campus</h3>
+              <h3 className="font-semibold mb-2 text-sm text-black">Events on Campus</h3>
               <div className="space-y-1">
                 {events.map((event) => (
                   <button
@@ -93,7 +128,7 @@ export default function CampusWorldPage() {
                 />
               </div>
 
-              <h2 className="text-2xl font-bold mb-2">{selectedEvent.title}</h2>
+              <h2 className="text-2xl font-bold mb-2 text-black">{selectedEvent.title}</h2>
 
               <div className="flex items-center gap-2 mb-4">
                 <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
@@ -157,7 +192,7 @@ export default function CampusWorldPage() {
 
               {selectedEvent.ticketTypes && selectedEvent.ticketTypes.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="font-semibold mb-3">Tickets</h3>
+                  <h3 className="font-semibold mb-3 text-black">Tickets</h3>
                   <div className="space-y-2">
                     {selectedEvent.ticketTypes.map((ticketType) => (
                       <div
@@ -165,7 +200,7 @@ export default function CampusWorldPage() {
                         className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
                       >
                         <div>
-                          <p className="font-medium">{ticketType.name}</p>
+                          <p className="font-medium text-black">{ticketType.name}</p>
                           <p className="text-sm text-black">
                             {ticketType.available} / {ticketType.quantity} available
                           </p>
@@ -181,12 +216,12 @@ export default function CampusWorldPage() {
                 </div>
               )}
 
-              <Link
-                href={`/events/${selectedEvent.id}`}
+              <button
+                onClick={() => setBookingEvent(selectedEvent)}
                 className="block w-full bg-blue-600 text-white text-center py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
               >
-                View Event Details
-              </Link>
+                Book Tickets
+              </button>
             </div>
           ) : (
             <div className="flex items-center justify-center h-full p-6 text-center">
@@ -211,13 +246,23 @@ export default function CampusWorldPage() {
                   />
                 </svg>
                 <p className="text-black">
-                  Click on a marker to view event details
+                  Select an event from the list to view details
                 </p>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Booking Modal */}
+      {bookingEvent && (
+        <BookingModal
+          event={bookingEvent}
+          isOpen={bookingEvent !== null}
+          onClose={() => setBookingEvent(null)}
+          closeLabel="Back to Map"
+        />
+      )}
     </div>
   );
 }

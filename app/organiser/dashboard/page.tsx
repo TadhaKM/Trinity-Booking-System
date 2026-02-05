@@ -78,12 +78,12 @@ export default function OrganiserDashboardPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Organiser Dashboard</h1>
+          <h1 className="text-3xl font-bold mb-2 text-black">Organiser Dashboard</h1>
           <p className="text-black">Manage your events and track performance</p>
         </div>
         <Link
           href="/organiser/create-event"
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+          className="bg-[#0d3b66] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#0a2f52] transition"
         >
           Create Event
         </Link>
@@ -183,7 +183,7 @@ export default function OrganiserDashboardPage() {
       {/* Events Performance Table */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold">Event Performance</h2>
+          <h2 className="text-xl font-bold text-black">Event Performance</h2>
         </div>
 
         {eventStats.length === 0 ? (
@@ -204,7 +204,7 @@ export default function OrganiserDashboardPage() {
             <p className="text-black mb-4">No events created yet</p>
             <Link
               href="/organiser/create-event"
-              className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
+              className="inline-block bg-[#0d3b66] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#0a2f52] transition"
             >
               Create Your First Event
             </Link>
@@ -239,7 +239,7 @@ export default function OrganiserDashboardPage() {
                       <td className="px-6 py-4">
                         <Link
                           href={`/events/${event.id}`}
-                          className="text-blue-600 hover:text-blue-700 font-medium"
+                          className="text-[#0d3b66] hover:text-[#1a5a96] font-medium"
                         >
                           {event.title}
                         </Link>

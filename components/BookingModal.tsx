@@ -205,7 +205,7 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
               <h3 className="text-2xl font-bold text-black mb-2">{event.title}</h3>
 
               {event.society && (
-                <p className="text-blue-600 font-semibold mb-4">{event.society.name}</p>
+                <p className="text-[#0d3b66] font-semibold mb-4">{event.society.name}</p>
               )}
 
               <p className="text-black mb-4">{event.description}</p>
@@ -234,7 +234,7 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
                       <div key={tt.id} className="flex justify-between items-center">
                         <span className="text-black">{tt.name}</span>
                         <div className="text-right">
-                          <span className="font-bold text-blue-600">
+                          <span className="font-bold text-[#0d3b66]">
                             {tt.price === 0 ? 'Free' : formatPrice(tt.price)}
                           </span>
                           <span className="text-xs text-black ml-2">
@@ -249,7 +249,7 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
 
               <button
                 onClick={() => setModalView('tickets')}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition"
+                className="w-full bg-[#0d3b66] text-white py-3 rounded-lg font-bold hover:bg-[#0a2f52] transition"
               >
                 Get Tickets
               </button>
@@ -265,7 +265,7 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <h4 className="font-bold text-black">{ticketType.name}</h4>
-                        <p className="text-lg font-bold text-blue-600 mt-1">
+                        <p className="text-lg font-bold text-[#0d3b66] mt-1">
                           {ticketType.price === 0 ? 'Free' : formatPrice(ticketType.price)}
                         </p>
                       </div>
@@ -280,7 +280,7 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
                           handleQuantityChange(ticketType.id, (ticketSelections[ticketType.id] || 0) - 1)
                         }
                         disabled={!ticketSelections[ticketType.id]}
-                        className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg font-bold hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                        className="w-10 h-10 bg-[#e8f0f8] text-[#0d3b66] rounded-lg font-bold hover:bg-[#d0e2f0] disabled:opacity-50 disabled:cursor-not-allowed transition"
                       >
                         -
                       </button>
@@ -292,7 +292,7 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
                           handleQuantityChange(ticketType.id, (ticketSelections[ticketType.id] || 0) + 1)
                         }
                         disabled={(ticketSelections[ticketType.id] || 0) >= ticketType.available}
-                        className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg font-bold hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                        className="w-10 h-10 bg-[#e8f0f8] text-[#0d3b66] rounded-lg font-bold hover:bg-[#d0e2f0] disabled:opacity-50 disabled:cursor-not-allowed transition"
                       >
                         +
                       </button>
@@ -313,14 +313,14 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
               <div className="flex gap-3">
                 <button
                   onClick={() => setModalView('details')}
-                  className="flex-1 border border-blue-600 text-blue-600 py-3 rounded-lg font-semibold hover:bg-blue-50 transition"
+                  className="flex-1 border border-[#0d3b66] text-[#0d3b66] py-3 rounded-lg font-semibold hover:bg-[#e8f0f8] transition"
                 >
                   Back
                 </button>
                 <button
                   onClick={handleProceedToCheckout}
                   disabled={totalSelected === 0}
-                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition disabled:bg-blue-300 disabled:cursor-not-allowed"
+                  className="flex-1 bg-[#0d3b66] text-white py-3 rounded-lg font-bold hover:bg-[#0a2f52] transition disabled:bg-[#7a9fc0] disabled:cursor-not-allowed"
                 >
                   {totalSelected === 0 ? 'Select Tickets' : 'Proceed'}
                 </button>
@@ -338,7 +338,7 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
               <div className="space-y-4">
                 <button
                   onClick={() => router.push('/login')}
-                  className="w-full border-2 border-blue-600 text-blue-600 py-4 rounded-lg font-bold hover:bg-blue-50 transition"
+                  className="w-full border-2 border-[#0d3b66] text-[#0d3b66] py-4 rounded-lg font-bold hover:bg-[#e8f0f8] transition"
                 >
                   <div className="flex items-center justify-center gap-2">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -359,7 +359,7 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
 
                 <button
                   onClick={() => setModalView('guest-form')}
-                  className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold hover:bg-blue-700 transition"
+                  className="w-full bg-[#0d3b66] text-white py-4 rounded-lg font-bold hover:bg-[#0a2f52] transition"
                 >
                   <div className="flex items-center justify-center gap-2">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -375,7 +375,7 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
 
               <button
                 onClick={() => setModalView('tickets')}
-                className="w-full mt-4 text-black font-medium hover:text-blue-600 transition text-sm"
+                className="w-full mt-4 text-black font-medium hover:text-[#0d3b66] transition text-sm"
               >
                 Back to ticket selection
               </button>
@@ -397,7 +397,7 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
                     value={guestInfo.name}
                     onChange={(e) => setGuestInfo((prev) => ({ ...prev, name: e.target.value }))}
                     placeholder="John Smith"
-                    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black placeholder:text-black"
+                    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d3b66] text-black placeholder:text-black"
                   />
                 </div>
                 <div>
@@ -407,7 +407,7 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
                     value={guestInfo.email}
                     onChange={(e) => setGuestInfo((prev) => ({ ...prev, email: e.target.value }))}
                     placeholder="john@tcd.ie"
-                    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black placeholder:text-black"
+                    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d3b66] text-black placeholder:text-black"
                   />
                 </div>
               </div>
@@ -415,14 +415,14 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
               <div className="flex gap-3">
                 <button
                   onClick={() => setModalView('auth')}
-                  className="flex-1 border border-blue-600 text-blue-600 py-3 rounded-lg font-semibold hover:bg-blue-50 transition"
+                  className="flex-1 border border-[#0d3b66] text-[#0d3b66] py-3 rounded-lg font-semibold hover:bg-[#e8f0f8] transition"
                 >
                   Back
                 </button>
                 <button
                   onClick={() => setModalView('checkout')}
                   disabled={!guestInfo.name.trim() || !guestInfo.email.trim()}
-                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition disabled:bg-blue-300 disabled:cursor-not-allowed"
+                  className="flex-1 bg-[#0d3b66] text-white py-3 rounded-lg font-bold hover:bg-[#0a2f52] transition disabled:bg-[#7a9fc0] disabled:cursor-not-allowed"
                 >
                   Continue to Checkout
                 </button>
@@ -441,7 +441,7 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
               </div>
 
               {/* Who's booking */}
-              <div className="bg-blue-50 rounded-lg p-3 mb-4">
+              <div className="bg-[#e8f0f8] rounded-lg p-3 mb-4">
                 <p className="text-sm text-black">
                   <span className="font-medium">Booking as: </span>
                   {user ? user.name : `${guestInfo.name} (Guest)`}
@@ -482,11 +482,11 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
                       value={couponCode}
                       onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                       placeholder="Enter code"
-                      className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black placeholder:text-black"
+                      className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d3b66] text-black placeholder:text-black"
                     />
                     <button
                       onClick={handleApplyCoupon}
-                      className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition font-medium"
+                      className="px-4 py-2 bg-[#e8f0f8] text-[#0d3b66] rounded-lg hover:bg-[#d0e2f0] transition font-medium"
                     >
                       Apply
                     </button>
@@ -520,14 +520,14 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
               <div className="flex gap-3">
                 <button
                   onClick={() => setModalView(user ? 'tickets' : 'guest-form')}
-                  className="flex-1 border border-blue-600 text-blue-600 py-3 rounded-lg font-semibold hover:bg-blue-50 transition"
+                  className="flex-1 border border-[#0d3b66] text-[#0d3b66] py-3 rounded-lg font-semibold hover:bg-[#e8f0f8] transition"
                 >
                   Back
                 </button>
                 <button
                   onClick={handleCompleteBooking}
                   disabled={bookingLoading}
-                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition disabled:bg-blue-300"
+                  className="flex-1 bg-[#0d3b66] text-white py-3 rounded-lg font-bold hover:bg-[#0a2f52] transition disabled:bg-[#7a9fc0]"
                 >
                   {bookingLoading ? 'Processing...' : 'Complete Booking'}
                 </button>
@@ -551,11 +551,11 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
                   : `A confirmation has been sent to ${guestInfo.email}.`}
               </p>
 
-              <div className="bg-blue-50 rounded-lg p-4 mb-6 text-left">
+              <div className="bg-[#e8f0f8] rounded-lg p-4 mb-6 text-left">
                 <p className="font-bold text-black">{event.title}</p>
                 <p className="text-sm text-black">{formatDate(event.startDate)}</p>
                 <p className="text-sm text-black">{event.location}</p>
-                <p className="text-sm font-semibold text-blue-600 mt-2">
+                <p className="text-sm font-semibold text-[#0d3b66] mt-2">
                   {totalSelected} ticket{totalSelected !== 1 ? 's' : ''} - {formatPrice(total)}
                 </p>
               </div>
@@ -563,14 +563,14 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
               <div className="flex gap-3">
                 <button
                   onClick={onClose}
-                  className="flex-1 border border-blue-600 text-blue-600 py-3 rounded-lg font-semibold hover:bg-blue-50 transition"
+                  className="flex-1 border border-[#0d3b66] text-[#0d3b66] py-3 rounded-lg font-semibold hover:bg-[#e8f0f8] transition"
                 >
                   {closeLabel || 'Close'}
                 </button>
                 {user && (
                   <button
                     onClick={() => router.push('/tickets')}
-                    className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition"
+                    className="flex-1 bg-[#0d3b66] text-white py-3 rounded-lg font-bold hover:bg-[#0a2f52] transition"
                   >
                     View My Tickets
                   </button>
