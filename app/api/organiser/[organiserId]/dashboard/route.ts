@@ -3,10 +3,10 @@ import { prisma } from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { organiserId: string } }
+  { params }: { params: Promise<{ organiserId: string }> }
 ) {
   try {
-    const { organiserId } = params;
+    const { organiserId } = await params;
 
     // Get all events created by this organiser
     const events = await prisma.event.findMany({

@@ -3,9 +3,10 @@ import { prisma } from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { organiserId: string } }
+  { params }: { params: Promise<{ organiserId: string }> }
 ) {
   try {
+    const { organiserId } = await params;
     // For this demo, return all societies
     // In a real app, you'd filter by organiser permissions
     const societies = await prisma.society.findMany({
