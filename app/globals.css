@@ -31,27 +31,28 @@
   --tcd-light-blue: 210 60% 95%; /* Light blue background */
 }
 
+/* Force light mode even on dark system preferences */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: 213 50% 10%; /* Dark navy background */
-    --foreground: 210 40% 98%;
-    --card: 213 50% 15%;
-    --card-foreground: 210 40% 98%;
-    --popover: 213 50% 15%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 100% 50%;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+    --primary: 213 94% 30%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 213 40% 20%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 213 40% 20%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 213 40% 25%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 213 40% 25%;
-    --input: 213 40% 20%;
-    --ring: 210 100% 50%;
+    --secondary: 210 60% 95%;
+    --secondary-foreground: 0 0% 0%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 0 0% 0%;
+    --accent: 210 80% 92%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 40% 90%;
+    --input: 210 40% 94%;
+    --ring: 213 94% 30%;
   }
 }
 
@@ -64,7 +65,7 @@ html {
 }
 
 body {
-  @apply bg-background;
+  background-color: #ffffff !important;
   color: #000000;
 }
 
