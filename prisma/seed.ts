@@ -13,12 +13,13 @@ async function main() {
   await prisma.society.deleteMany();
   await prisma.user.deleteMany();
 
-  // Create Users
+  // Create Users (passwords are plaintext for demo purposes)
   const users = await Promise.all([
     prisma.user.create({
       data: {
         email: 'student@tcd.ie',
         name: 'John Smith',
+        password: 'password123',
         isOrganiser: false,
       },
     }),
@@ -26,6 +27,7 @@ async function main() {
       data: {
         email: 'organiser@tcd.ie',
         name: 'Sarah Jones',
+        password: 'password123',
         isOrganiser: true,
       },
     }),
@@ -33,6 +35,7 @@ async function main() {
       data: {
         email: 'alice@tcd.ie',
         name: 'Alice Murphy',
+        password: 'password123',
         isOrganiser: false,
       },
     }),
@@ -40,6 +43,7 @@ async function main() {
       data: {
         email: 'bob@tcd.ie',
         name: "Bob O'Brien",
+        password: 'password123',
         isOrganiser: true,
       },
     }),
