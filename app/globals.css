@@ -4,7 +4,7 @@
 
 :root {
   /* TCD-inspired color scheme - Blue and White */
-  --background: 210 50% 98%; /* Very light blue-white background */
+  --background: 0 0% 100%; /* Pure white background */
   --foreground: 0 0% 0%;
   --card: 0 0% 100%; /* Pure white cards */
   --card-foreground: 0 0% 0%;
