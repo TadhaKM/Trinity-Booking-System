@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Event } from '@/lib/types';
@@ -8,6 +8,18 @@ import { formatDate, formatPrice } from '@/lib/utils';
 import BookingModal from '@/components/BookingModal';
 
 export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0d3b66]"></div>
+      </div>
+    }>
+      <SearchPageContent />
+    </Suspense>
+  );
+}
+
+function SearchPageContent() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category');
 
