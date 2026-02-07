@@ -14,6 +14,8 @@
     "setup": "npm run db:push && npm run db:seed"
   },
   "dependencies": {
+    "@libsql/client": "^0.8.0",
+    "@prisma/adapter-libsql": "^5.22.0",
     "@prisma/client": "^5.22.0",
     "clsx": "^2.1.1",
     "date-fns": "^3.0.6",

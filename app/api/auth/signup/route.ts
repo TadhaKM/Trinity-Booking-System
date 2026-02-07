@@ -101,7 +101,8 @@ export async function POST(request: NextRequest) {
       isOrganiser: user.isOrganiser,
     });
   } catch (error: any) {
-    console.error('Signup error:', error);
+    console.error('Signup error:', error?.message || error);
+    console.error('Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
 
     if (error.code === 'P2002') {
       return NextResponse.json(
@@ -111,7 +112,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: 'Something went wrong. Please try again.' },
+      { error: 'Something went wrong. Please try again.', details: error?.message || String(error) },
       { status: 500 }
     );
   }
