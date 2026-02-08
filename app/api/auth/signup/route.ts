@@ -99,6 +99,7 @@ export async function POST(request: NextRequest) {
       email: user.email,
       name: user.name,
       isOrganiser: user.isOrganiser,
+      profilePicture: null,
     });
   } catch (error: any) {
     console.error('Signup error:', error?.message || error);

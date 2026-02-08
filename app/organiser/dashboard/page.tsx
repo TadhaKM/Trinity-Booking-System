@@ -16,6 +16,7 @@ interface DashboardStats {
 interface EventStats {
   id: string;
   title: string;
+  startDate: string;
   ticketsSold: number;
   revenue: number;
   capacity: number;
@@ -218,6 +219,9 @@ export default function OrganiserDashboardPage() {
                     Event Name
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
+                    Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                     Tickets Sold
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
@@ -228,6 +232,9 @@ export default function OrganiserDashboardPage() {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                     Fill Rate
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -243,6 +250,9 @@ export default function OrganiserDashboardPage() {
                         >
                           {event.title}
                         </Link>
+                      </td>
+                      <td className="px-6 py-4 text-black text-sm">
+                        {new Date(event.startDate).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 text-black">
                         {event.ticketsSold}
@@ -271,6 +281,14 @@ export default function OrganiserDashboardPage() {
                             {fillRate.toFixed(0)}%
                           </span>
                         </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Link
+                          href={`/organiser/edit-event/${event.id}`}
+                          className="text-[#0d3b66] hover:text-[#0a2f52] font-medium text-sm"
+                        >
+                          Edit
+                        </Link>
                       </td>
                     </tr>
                   );

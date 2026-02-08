@@ -271,7 +271,11 @@ export default function EventDetailPage() {
         {/* Event Header */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
           <div className="relative h-96">
-            <Image src={event.imageUrl} alt={event.title} fill className="object-cover" />
+            {event.imageUrl.startsWith('data:') ? (
+              <img src={event.imageUrl} alt={event.title} className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
+              <Image src={event.imageUrl} alt={event.title} fill className="object-cover" />
+            )}
           </div>
           <div className="p-8">
             <div className="flex flex-wrap gap-2 mb-4">

@@ -5,9 +5,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Event } from '@/lib/types';
 import { formatDate, formatPrice } from '@/lib/utils';
+import { useAuthStore } from '@/lib/auth-store';
 import BookingModal from '@/components/BookingModal';
 
 export default function HomePage() {
+  const user = useAuthStore((state) => state.user);
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,28 +41,74 @@ export default function HomePage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-[#0d3b66] to-[#1a5a96] rounded-2xl p-8 md:p-12 mb-12 text-white shadow-lg">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4">
-          Discover Trinity Events
-        </h1>
-        <p className="text-xl mb-6 text-blue-100">
-          Book tickets for societies, cultural events, and campus activities
-        </p>
-        <div className="flex flex-wrap gap-4">
-          <Link
-            href="/campus-world"
-            className="bg-white text-[#0d3b66] px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition"
-          >
-            Explore Campus World
-          </Link>
-          <Link
-            href="/search"
-            className="bg-white/20 text-white border border-white/30 px-6 py-3 rounded-lg font-semibold hover:bg-white/30 transition"
-          >
-            Search Events
-          </Link>
+      {user ? (
+        <div className="relative rounded-2xl overflow-hidden mb-12 shadow-lg">
+          {/* Background: profile picture or Trinity campus fallback */}
+          <div className="absolute inset-0">
+            <img
+              src={user.profilePicture || 'https://cdn.britannica.com/30/242230-050-8A280600/Dublin-Ireland-Trinity-College.jpg'}
+              alt=""
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0d3b66]/85 to-[#1a5a96]/70" />
+          </div>
+          <div className="relative p-8 md:p-12 text-white">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+              Welcome back, {user.name.split(' ')[0]}!
+            </h1>
+            <p className="text-xl mb-6 text-blue-100">
+              Check out the latest events happening around campus
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <Link
+                href="/campus-world"
+                className="bg-white text-[#0d3b66] px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition"
+              >
+                Explore Campus World
+              </Link>
+              <Link
+                href="/search"
+                className="bg-white/20 text-white border border-white/30 px-6 py-3 rounded-lg font-semibold hover:bg-white/30 transition"
+              >
+                Search Events
+              </Link>
+            </div>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="relative rounded-2xl overflow-hidden mb-12 shadow-lg">
+          <div className="absolute inset-0">
+            <img
+              src="https://cdn.britannica.com/30/242230-050-8A280600/Dublin-Ireland-Trinity-College.jpg"
+              alt=""
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0d3b66]/85 to-[#1a5a96]/70" />
+          </div>
+          <div className="relative p-8 md:p-12 text-white">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+              Discover Trinity Events
+            </h1>
+            <p className="text-xl mb-6 text-blue-100">
+              Book tickets for societies, cultural events, and campus activities
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <Link
+                href="/login"
+                className="bg-white text-[#0d3b66] px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition"
+              >
+                Login
+              </Link>
+              <Link
+                href="/signup"
+                className="bg-white/20 text-white border border-white/30 px-6 py-3 rounded-lg font-semibold hover:bg-white/30 transition"
+              >
+                Sign Up
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* All Events Section */}
       <div>
@@ -82,12 +130,16 @@ export default function HomePage() {
               className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition cursor-pointer"
             >
               <div className="relative h-48">
-                <Image
-                  src={event.imageUrl}
-                  alt={event.title}
-                  fill
-                  className="object-cover"
-                />
+                {event.imageUrl.startsWith('data:') ? (
+                  <img src={event.imageUrl} alt={event.title} className="absolute inset-0 w-full h-full object-cover" />
+                ) : (
+                  <Image
+                    src={event.imageUrl}
+                    alt={event.title}
+                    fill
+                    className="object-cover"
+                  />
+                )}
                 <div className="absolute top-3 right-3 bg-white text-black px-3 py-1 rounded-full text-sm font-semibold">
                   {event.category}
                 </div>

@@ -6,8 +6,10 @@ import { useAuthStore } from '@/lib/auth-store';
 import { Society } from '@/lib/types';
 import ComboBox from '@/components/ComboBox';
 import ImageUpload from '@/components/ImageUpload';
+import { use } from 'react';
 
 interface TicketTypeForm {
+  id?: string;
   name: string;
   price: number;
   quantity: number;
@@ -21,13 +23,15 @@ interface ConflictEvent {
   location: string;
 }
 
-export default function CreateEventPage() {
+export default function EditEventPage({ params }: { params: Promise<{ eventId: string }> }) {
+  const { eventId } = use(params);
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
 
   const [societies, setSocieties] = useState<Society[]>([]);
   const [conflicts, setConflicts] = useState<ConflictEvent[]>([]);
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [checkingConflicts, setCheckingConflicts] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -39,15 +43,12 @@ export default function CreateEventPage() {
     endDate: '',
     endTime: '',
     location: '',
-    category: 'Arts & Culture',
-    imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800',
+    category: '',
+    imageUrl: '',
     tags: '',
   });
 
-  const [ticketTypes, setTicketTypes] = useState<TicketTypeForm[]>([
-    { name: 'General Admission', price: 0, quantity: 100 },
-  ]);
-
+  const [ticketTypes, setTicketTypes] = useState<TicketTypeForm[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -61,23 +62,68 @@ export default function CreateEventPage() {
       return;
     }
 
-    const fetchSocieties = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch(`/api/organiser/${user.id}/societies`);
-        const data = await res.json();
-        setSocieties(Array.isArray(data) ? data : []);
+        const [eventRes, societiesRes] = await Promise.all([
+          fetch(`/api/events/${eventId}`),
+          fetch(`/api/organiser/${user.id}/societies`),
+        ]);
+
+        const eventData = await eventRes.json();
+        const societiesData = await societiesRes.json();
+
+        if (!eventRes.ok) {
+          setErrors({ submit: 'Event not found' });
+          setFetching(false);
+          return;
+        }
+
+        // Verify ownership
+        if (eventData.organiserId !== user.id) {
+          router.push('/organiser/dashboard');
+          return;
+        }
+
+        const start = new Date(eventData.startDate);
+        const end = new Date(eventData.endDate);
+
+        setFormData({
+          title: eventData.title,
+          description: eventData.description,
+          societyId: eventData.societyId,
+          startDate: start.toISOString().split('T')[0],
+          startTime: start.toTimeString().slice(0, 5),
+          endDate: end.toISOString().split('T')[0],
+          endTime: end.toTimeString().slice(0, 5),
+          location: eventData.location,
+          category: eventData.category,
+          imageUrl: eventData.imageUrl,
+          tags: Array.isArray(eventData.tags) ? eventData.tags.join(', ') : '',
+        });
+
+        setTicketTypes(
+          eventData.ticketTypes.map((tt: any) => ({
+            id: tt.id,
+            name: tt.name,
+            price: tt.price,
+            quantity: tt.quantity,
+          }))
+        );
+
+        setSocieties(Array.isArray(societiesData) ? societiesData : []);
       } catch (error) {
-        console.error('Error fetching societies:', error);
+        console.error('Error fetching event:', error);
+        setErrors({ submit: 'Failed to load event data' });
+      } finally {
+        setFetching(false);
       }
     };
 
-    fetchSocieties();
-  }, [user, router]);
+    fetchData();
+  }, [user, router, eventId]);
 
   const checkConflicts = async () => {
-    if (!formData.startDate || !formData.startTime || !formData.location) {
-      return;
-    }
+    if (!formData.startDate || !formData.startTime || !formData.location) return;
 
     setCheckingConflicts(true);
     try {
@@ -93,6 +139,7 @@ export default function CreateEventPage() {
           startDate: startDateTime,
           endDate: endDateTime,
           location: formData.location,
+          excludeEventId: eventId,
         }),
       });
 
@@ -106,18 +153,15 @@ export default function CreateEventPage() {
   };
 
   useEffect(() => {
+    if (fetching) return;
     const debounce = setTimeout(() => {
       checkConflicts();
     }, 500);
-
     return () => clearTimeout(debounce);
-  }, [formData.startDate, formData.startTime, formData.endDate, formData.endTime, formData.location]);
+  }, [formData.startDate, formData.startTime, formData.endDate, formData.endTime, formData.location, fetching]);
 
   const handleAddTicketType = () => {
-    setTicketTypes([
-      ...ticketTypes,
-      { name: '', price: 0, quantity: 0 },
-    ]);
+    setTicketTypes([...ticketTypes, { name: '', price: 0, quantity: 0 }]);
   };
 
   const handleRemoveTicketType = (index: number) => {
@@ -137,41 +181,30 @@ export default function CreateEventPage() {
   const validateForm = (): Record<string, string> => {
     const newErrors: Record<string, string> = {};
 
-    // Title validation
     if (!formData.title.trim()) {
       newErrors.title = 'Event title is required';
     } else if (formData.title.trim().length < 3) {
       newErrors.title = 'Event title must be at least 3 characters';
     }
 
-    // Description validation
     if (!formData.description.trim()) {
       newErrors.description = 'Event description is required';
     } else if (formData.description.trim().length < 20) {
       newErrors.description = 'Please provide a more detailed description (at least 20 characters)';
     }
 
-    // Society validation
     if (!formData.societyId) {
       newErrors.societyId = 'Please select a society for this event';
     }
 
-    // Date and time validation
     if (!formData.startDate) {
       newErrors.startDate = 'Start date is required';
-    } else {
-      const startDateTime = new Date(`${formData.startDate}T${formData.startTime || '00:00'}`);
-      const now = new Date();
-      if (startDateTime < now) {
-        newErrors.startDate = 'Start date and time must be in the future';
-      }
     }
 
     if (!formData.startTime) {
       newErrors.startTime = 'Start time is required';
     }
 
-    // End date/time validation (if provided)
     if (formData.endDate && formData.startDate) {
       const startDateTime = new Date(`${formData.startDate}T${formData.startTime || '00:00'}`);
       const endDateTime = new Date(`${formData.endDate}T${formData.endTime || '23:59'}`);
@@ -188,12 +221,10 @@ export default function CreateEventPage() {
       newErrors.endDate = 'Please specify an end date when you set an end time';
     }
 
-    // Location validation
     if (!formData.location.trim()) {
       newErrors.location = 'Event location is required';
     }
 
-    // Ticket types validation
     ticketTypes.forEach((tt, index) => {
       if (!tt.name.trim()) {
         newErrors[`ticketType_${index}_name`] = 'Ticket type name is required';
@@ -215,14 +246,12 @@ export default function CreateEventPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!user) return;
 
     const validationErrors = validateForm();
     setErrors(validationErrors);
 
     if (Object.keys(validationErrors).length > 0) {
-      // Scroll to the first error
       const firstErrorField = Object.keys(validationErrors)[0];
       const element = document.getElementById(firstErrorField);
       if (element) {
@@ -238,8 +267,8 @@ export default function CreateEventPage() {
         ? `${formData.endDate}T${formData.endTime}`
         : startDateTime;
 
-      const res = await fetch('/api/events/create', {
-        method: 'POST',
+      const res = await fetch(`/api/events/${eventId}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
@@ -252,28 +281,33 @@ export default function CreateEventPage() {
       });
 
       if (res.ok) {
-        const data = await res.json();
-        router.push(`/events/${data.id}`);
+        router.push(`/events/${eventId}`);
       } else {
         const errorData = await res.json();
         setErrors({
-          submit: errorData.error || 'Failed to create event. Please check your information and try again.'
+          submit: errorData.error || 'Failed to update event. Please try again.',
         });
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (error) {
-      setErrors({
-        submit: 'An unexpected error occurred while creating the event. Please try again.'
-      });
+      setErrors({ submit: 'An unexpected error occurred. Please try again.' });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setLoading(false);
     }
   };
 
+  if (fetching) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-black">Create New Event</h1>
+      <h1 className="text-3xl font-bold mb-8 text-black">Edit Event</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Error Summary */}
@@ -301,9 +335,7 @@ export default function CreateEventPage() {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2 text-black">
-                Event Title *
-              </label>
+              <label className="block text-sm font-medium mb-2 text-black">Event Title *</label>
               <input
                 id="title"
                 type="text"
@@ -317,15 +349,11 @@ export default function CreateEventPage() {
                 }`}
                 placeholder="Enter event title"
               />
-              {errors.title && (
-                <p className="mt-1 text-sm text-red-600">{errors.title}</p>
-              )}
+              {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-black">
-                Description *
-              </label>
+              <label className="block text-sm font-medium mb-2 text-black">Description *</label>
               <textarea
                 id="description"
                 value={formData.description}
@@ -339,15 +367,11 @@ export default function CreateEventPage() {
                 }`}
                 placeholder="Describe your event"
               />
-              {errors.description && (
-                <p className="mt-1 text-sm text-red-600">{errors.description}</p>
-              )}
+              {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-black">
-                Society *
-              </label>
+              <label className="block text-sm font-medium mb-2 text-black">Society *</label>
               <ComboBox
                 id="societyId"
                 value={formData.societyId}
@@ -360,15 +384,11 @@ export default function CreateEventPage() {
                 error={errors.societyId}
                 allowCustom
               />
-              {errors.societyId && (
-                <p className="mt-1 text-sm text-red-600">{errors.societyId}</p>
-              )}
+              {errors.societyId && <p className="mt-1 text-sm text-red-600">{errors.societyId}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-black">
-                Category *
-              </label>
+              <label className="block text-sm font-medium mb-2 text-black">Category *</label>
               <ComboBox
                 value={formData.category}
                 onChange={(value) => setFormData({ ...formData, category: value })}
@@ -386,24 +406,18 @@ export default function CreateEventPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-black">
-                Tags (comma-separated)
-              </label>
+              <label className="block text-sm font-medium mb-2 text-black">Tags (comma-separated)</label>
               <input
                 type="text"
                 value={formData.tags}
-                onChange={(e) =>
-                  setFormData({ ...formData, tags: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d3b66] text-black placeholder:text-gray-500"
                 placeholder="e.g., music, concert, live"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-black">
-                Event Image/Thumbnail
-              </label>
+              <label className="block text-sm font-medium mb-2 text-black">Event Image/Thumbnail</label>
               <ImageUpload
                 currentImage={formData.imageUrl || undefined}
                 onImageChange={(dataUri) => setFormData({ ...formData, imageUrl: dataUri })}
@@ -414,9 +428,7 @@ export default function CreateEventPage() {
                 <input
                   type="url"
                   value={formData.imageUrl.startsWith('data:') ? '' : formData.imageUrl}
-                  onChange={(e) =>
-                    setFormData({ ...formData, imageUrl: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d3b66] text-black placeholder:text-gray-500"
                   placeholder="https://example.com/image.jpg"
                 />
@@ -451,9 +463,7 @@ export default function CreateEventPage() {
 
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2 text-black">
-                Start Date *
-              </label>
+              <label className="block text-sm font-medium mb-2 text-black">Start Date *</label>
               <input
                 id="startDate"
                 type="date"
@@ -462,19 +472,15 @@ export default function CreateEventPage() {
                   setFormData({ ...formData, startDate: e.target.value });
                   if (errors.startDate) setErrors({ ...errors, startDate: '' });
                 }}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d3b66] text-black placeholder:text-gray-500 ${
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d3b66] text-black ${
                   errors.startDate ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
-              {errors.startDate && (
-                <p className="mt-1 text-sm text-red-600">{errors.startDate}</p>
-              )}
+              {errors.startDate && <p className="mt-1 text-sm text-red-600">{errors.startDate}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-black">
-                Start Time *
-              </label>
+              <label className="block text-sm font-medium mb-2 text-black">Start Time *</label>
               <input
                 id="startTime"
                 type="time"
@@ -483,13 +489,11 @@ export default function CreateEventPage() {
                   setFormData({ ...formData, startTime: e.target.value });
                   if (errors.startTime) setErrors({ ...errors, startTime: '' });
                 }}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d3b66] text-black placeholder:text-gray-500 ${
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d3b66] text-black ${
                   errors.startTime ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
-              {errors.startTime && (
-                <p className="mt-1 text-sm text-red-600">{errors.startTime}</p>
-              )}
+              {errors.startTime && <p className="mt-1 text-sm text-red-600">{errors.startTime}</p>}
             </div>
 
             <div>
@@ -502,13 +506,11 @@ export default function CreateEventPage() {
                   setFormData({ ...formData, endDate: e.target.value });
                   if (errors.endDate) setErrors({ ...errors, endDate: '' });
                 }}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d3b66] text-black placeholder:text-gray-500 ${
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d3b66] text-black ${
                   errors.endDate ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
-              {errors.endDate && (
-                <p className="mt-1 text-sm text-red-600">{errors.endDate}</p>
-              )}
+              {errors.endDate && <p className="mt-1 text-sm text-red-600">{errors.endDate}</p>}
             </div>
 
             <div>
@@ -521,20 +523,16 @@ export default function CreateEventPage() {
                   setFormData({ ...formData, endTime: e.target.value });
                   if (errors.endTime) setErrors({ ...errors, endTime: '' });
                 }}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d3b66] text-black placeholder:text-gray-500 ${
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d3b66] text-black ${
                   errors.endTime ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
-              {errors.endTime && (
-                <p className="mt-1 text-sm text-red-600">{errors.endTime}</p>
-              )}
+              {errors.endTime && <p className="mt-1 text-sm text-red-600">{errors.endTime}</p>}
             </div>
           </div>
 
           <div className="mt-4">
-            <label className="block text-sm font-medium mb-2 text-black">
-              Location *
-            </label>
+            <label className="block text-sm font-medium mb-2 text-black">Location *</label>
             <input
               id="location"
               type="text"
@@ -548,12 +546,9 @@ export default function CreateEventPage() {
               }`}
               placeholder="e.g., Exam Hall, Trinity College"
             />
-            {errors.location && (
-              <p className="mt-1 text-sm text-red-600">{errors.location}</p>
-            )}
+            {errors.location && <p className="mt-1 text-sm text-red-600">{errors.location}</p>}
           </div>
 
-          {/* Conflict Detection */}
           {checkingConflicts && (
             <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-700">Checking for conflicts...</p>
@@ -562,9 +557,7 @@ export default function CreateEventPage() {
 
           {conflicts.length > 0 && (
             <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <h3 className="font-semibold text-yellow-800 mb-2">
-                Scheduling Conflicts Detected
-              </h3>
+              <h3 className="font-semibold text-yellow-800 mb-2">Scheduling Conflicts Detected</h3>
               <div className="space-y-2">
                 {conflicts.map((conflict) => (
                   <div key={conflict.id} className="text-sm text-yellow-700">
@@ -599,7 +592,7 @@ export default function CreateEventPage() {
           <div className="space-y-4">
             {ticketTypes.map((ticketType, index) => (
               <div
-                key={index}
+                key={ticketType.id || index}
                 className={`border rounded-lg p-4 ${
                   errors[`ticketType_${index}_name`] || errors[`ticketType_${index}_quantity`] || errors[`ticketType_${index}_price`]
                     ? 'border-red-300 bg-red-50'
@@ -608,9 +601,7 @@ export default function CreateEventPage() {
               >
                 <div className="grid md:grid-cols-4 gap-4">
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium mb-2 text-black">
-                      Name *
-                    </label>
+                    <label className="block text-sm font-medium mb-2 text-black">Name *</label>
                     <input
                       id={`ticketType_${index}_name`}
                       type="text"
@@ -634,9 +625,7 @@ export default function CreateEventPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-black">
-                      Price (EUR) *
-                    </label>
+                    <label className="block text-sm font-medium mb-2 text-black">Price (EUR) *</label>
                     <input
                       id={`ticketType_${index}_price`}
                       type="number"
@@ -661,9 +650,7 @@ export default function CreateEventPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-black">
-                      Quantity *
-                    </label>
+                    <label className="block text-sm font-medium mb-2 text-black">Quantity *</label>
                     <input
                       id={`ticketType_${index}_quantity`}
                       type="number"
@@ -715,7 +702,7 @@ export default function CreateEventPage() {
             disabled={loading}
             className="flex-1 bg-[#0d3b66] text-white py-3 rounded-lg font-semibold hover:bg-[#0a2f52] transition disabled:bg-gray-400"
           >
-            {loading ? 'Creating...' : 'Create Event'}
+            {loading ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </form>

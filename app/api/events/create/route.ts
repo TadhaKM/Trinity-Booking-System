@@ -92,16 +92,36 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Get society location for event coordinates
-    const society = await prisma.society.findUnique({
+    // Get society - if societyId matches an existing society, use it.
+    // Otherwise, treat it as a custom society name and create a new one.
+    let society = await prisma.society.findUnique({
       where: { id: societyId },
     });
 
+    let resolvedSocietyId = societyId;
+
     if (!society) {
-      return NextResponse.json(
-        { error: 'The selected society was not found. Please select a valid society.' },
-        { status: 404 }
-      );
+      // Try to find by name (case-insensitive)
+      const existingByName = await prisma.society.findFirst({
+        where: { name: { equals: societyId } },
+      });
+
+      if (existingByName) {
+        society = existingByName;
+        resolvedSocietyId = existingByName.id;
+      } else {
+        // Create a new society with the custom name
+        society = await prisma.society.create({
+          data: {
+            name: societyId.trim(),
+            description: `Society created by organiser`,
+            category: category || 'Other',
+            imageUrl: 'https://images.unsplash.com/photo-1523050854058-8df90110c8f1?w=800',
+            location: '{}',
+          },
+        });
+        resolvedSocietyId = society.id;
+      }
     }
 
     // Verify organiser exists
@@ -130,7 +150,7 @@ export async function POST(request: NextRequest) {
       data: {
         title: title.trim(),
         description: description.trim(),
-        societyId,
+        societyId: resolvedSocietyId,
         startDate: new Date(startDate),
         endDate: new Date(endDate || startDate),
         location: location.trim(),

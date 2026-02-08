@@ -409,12 +409,16 @@ export default function CalendarPage() {
                 <div>
                   {selectedEvent.imageUrl && (
                     <div className="relative h-48 rounded-lg overflow-hidden mb-4">
-                      <Image
-                        src={selectedEvent.imageUrl}
-                        alt={selectedEvent.title}
-                        fill
-                        className="object-cover"
-                      />
+                      {selectedEvent.imageUrl.startsWith('data:') ? (
+                        <img src={selectedEvent.imageUrl} alt={selectedEvent.title} className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        <Image
+                          src={selectedEvent.imageUrl}
+                          alt={selectedEvent.title}
+                          fill
+                          className="object-cover"
+                        />
+                      )}
                       <div className="absolute top-3 right-3 bg-white text-black px-3 py-1 rounded-full text-sm font-semibold">
                         {selectedEvent.category}
                       </div>

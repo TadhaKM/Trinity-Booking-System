@@ -36,6 +36,7 @@ async function createTables() {
       "name" TEXT NOT NULL,
       "password" TEXT NOT NULL DEFAULT '',
       "isOrganiser" INTEGER NOT NULL DEFAULT 0,
+      "profilePicture" TEXT,
       "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     )`,

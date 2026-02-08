@@ -82,6 +82,19 @@ export function isEventPast(endDate: Date | string): boolean {
   return d < new Date();
 }
 
+export function isDataUri(url: string): boolean {
+  return url.startsWith('data:');
+}
+
+export function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export function isEventUpcoming(startDate: Date | string): boolean {
   const d = typeof startDate === 'string' ? new Date(startDate) : startDate;
   return d > new Date();

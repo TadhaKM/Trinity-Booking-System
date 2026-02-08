@@ -7,12 +7,16 @@ import Image from 'next/image';
 import { useAuthStore } from '@/lib/auth-store';
 import { Society } from '@/lib/types';
 import { getInitials } from '@/lib/utils';
+import ImageUpload from '@/components/ImageUpload';
 
 export default function ProfilePage() {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
+  const updateProfilePicture = useAuthStore((state) => state.updateProfilePicture);
   const [followedSocieties, setFollowedSocieties] = useState<Society[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showImageUpload, setShowImageUpload] = useState(false);
+  const [uploadingPicture, setUploadingPicture] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -35,6 +39,27 @@ export default function ProfilePage() {
     fetchFollowedSocieties();
   }, [user, router]);
 
+  const handleProfilePictureChange = async (dataUri: string) => {
+    if (!user) return;
+    setUploadingPicture(true);
+    try {
+      const res = await fetch(`/api/users/${user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profilePicture: dataUri }),
+      });
+
+      if (res.ok) {
+        updateProfilePicture(dataUri);
+        setShowImageUpload(false);
+      }
+    } catch (error) {
+      console.error('Error updating profile picture:', error);
+    } finally {
+      setUploadingPicture(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -50,8 +75,28 @@ export default function ProfilePage() {
       {/* Profile Header */}
       <div className="bg-white rounded-lg shadow-md p-8 mb-8">
         <div className="flex items-center gap-6">
-          <div className="w-24 h-24 bg-blue-600 text-white rounded-full flex items-center justify-center text-3xl font-bold">
-            {getInitials(user.name)}
+          <div className="relative group">
+            {user.profilePicture ? (
+              <img
+                src={user.profilePicture}
+                alt={user.name}
+                className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
+              />
+            ) : (
+              <div className="w-24 h-24 bg-blue-600 text-white rounded-full flex items-center justify-center text-3xl font-bold">
+                {getInitials(user.name)}
+              </div>
+            )}
+            <button
+              onClick={() => setShowImageUpload(!showImageUpload)}
+              className="absolute bottom-0 right-0 bg-[#0d3b66] text-white rounded-full p-1.5 shadow-md hover:bg-[#0a2f52] transition"
+              title="Change photo"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
           </div>
           <div>
             <h1 className="text-3xl font-bold mb-2">{user.name}</h1>
@@ -63,6 +108,21 @@ export default function ProfilePage() {
             )}
           </div>
         </div>
+
+        {/* Image Upload Section */}
+        {showImageUpload && (
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <h3 className="text-sm font-medium text-black mb-3">Change Profile Picture</h3>
+            <ImageUpload
+              currentImage={user.profilePicture || undefined}
+              onImageChange={handleProfilePictureChange}
+              maxSizeMB={2}
+            />
+            {uploadingPicture && (
+              <p className="mt-2 text-sm text-[#0d3b66]">Uploading...</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Quick Links */}
@@ -71,18 +131,8 @@ export default function ProfilePage() {
           href="/tickets"
           className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition"
         >
-          <svg
-            className="w-8 h-8 text-blue-600 mb-3"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
-            />
+          <svg className="w-8 h-8 text-blue-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
           </svg>
           <h3 className="font-bold mb-1">My Tickets</h3>
           <p className="text-sm text-black">View your booked tickets</p>
@@ -92,18 +142,8 @@ export default function ProfilePage() {
           href="/calendar"
           className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition"
         >
-          <svg
-            className="w-8 h-8 text-blue-600 mb-3"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-            />
+          <svg className="w-8 h-8 text-blue-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
           <h3 className="font-bold mb-1">Calendar</h3>
           <p className="text-sm text-black">View upcoming events</p>
@@ -114,18 +154,8 @@ export default function ProfilePage() {
             href="/organiser/dashboard"
             className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition"
           >
-            <svg
-              className="w-8 h-8 text-blue-600 mb-3"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-              />
+            <svg className="w-8 h-8 text-blue-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
             <h3 className="font-bold mb-1">Dashboard</h3>
             <p className="text-sm text-black">Manage your events</p>
@@ -139,20 +169,10 @@ export default function ProfilePage() {
 
         {followedSocieties.length === 0 ? (
           <div className="text-center py-12">
-            <svg
-              className="w-16 h-16 text-black mx-auto mb-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-              />
+            <svg className="w-16 h-16 text-black mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            <p className="text-black mb-4">You're not following any societies yet</p>
+            <p className="text-black mb-4">You&apos;re not following any societies yet</p>
             <Link
               href="/search"
               className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
@@ -169,18 +189,11 @@ export default function ProfilePage() {
                 className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition"
               >
                 <div className="relative h-32">
-                  <Image
-                    src={society.imageUrl}
-                    alt={society.name}
-                    fill
-                    className="object-cover"
-                  />
+                  <Image src={society.imageUrl} alt={society.name} fill className="object-cover" />
                 </div>
                 <div className="p-4">
                   <h3 className="font-bold mb-1">{society.name}</h3>
-                  <p className="text-sm text-black line-clamp-2">
-                    {society.description}
-                  </p>
+                  <p className="text-sm text-black line-clamp-2">{society.description}</p>
                   <span className="inline-block mt-2 bg-gray-100 text-black px-2 py-1 rounded text-xs">
                     {society.category}
                   </span>

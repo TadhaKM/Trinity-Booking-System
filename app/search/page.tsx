@@ -152,12 +152,16 @@ function SearchPageContent() {
                 className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition cursor-pointer"
               >
                 <div className="relative h-48">
-                  <Image
-                    src={event.imageUrl}
-                    alt={event.title}
-                    fill
-                    className="object-cover"
-                  />
+                  {event.imageUrl.startsWith('data:') ? (
+                    <img src={event.imageUrl} alt={event.title} className="absolute inset-0 w-full h-full object-cover" />
+                  ) : (
+                    <Image
+                      src={event.imageUrl}
+                      alt={event.title}
+                      fill
+                      className="object-cover"
+                    />
+                  )}
                   <div className="absolute top-3 right-3 bg-white text-black px-3 py-1 rounded-full text-sm font-semibold">
                     {event.category}
                   </div>

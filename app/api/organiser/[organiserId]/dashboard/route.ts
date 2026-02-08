@@ -67,6 +67,7 @@ export async function GET(
       return {
         id: event.id,
         title: event.title,
+        startDate: event.startDate.toISOString(),
         ticketsSold,
         revenue,
         capacity,
