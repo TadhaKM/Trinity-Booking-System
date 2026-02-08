@@ -137,7 +137,7 @@ export default function SignupPage() {
         if (res.status === 409) {
           setFieldErrors({ email: data.error });
         } else {
-          setError(data.error || 'Something went wrong. Please try again.');
+          setError(data.details || data.error || 'Something went wrong. Please try again.');
         }
         setLoading(false);
         return;
