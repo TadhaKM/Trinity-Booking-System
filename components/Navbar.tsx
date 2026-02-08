@@ -27,6 +27,9 @@ export default function Navbar() {
     if (user.isOrganiser) {
       navItems.push({ href: '/organiser/dashboard', label: 'Organiser' });
     }
+    if (user.isAdmin) {
+      navItems.push({ href: '/admin', label: 'Admin' });
+    }
   }
 
   return (

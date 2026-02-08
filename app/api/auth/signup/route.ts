@@ -99,6 +99,7 @@ export async function POST(request: NextRequest) {
       email: user.email,
       name: user.name,
       isOrganiser: user.isOrganiser,
+      isAdmin: false,
       profilePicture: null,
     });
   } catch (error: any) {

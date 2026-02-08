@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
       email: user.email,
       name: user.name,
       isOrganiser: user.isOrganiser,
+      isAdmin: user.isAdmin || false,
       profilePicture: user.profilePicture || null,
     });
   } catch (error: any) {
