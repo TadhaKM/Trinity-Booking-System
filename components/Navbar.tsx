@@ -33,7 +33,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 backdrop-blur-lg bg-white/80 border-b border-gray-200/60 shadow-sm">
+    <nav className="sticky top-0 z-50 bg-[#0E73B9] shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo */}
@@ -43,8 +43,8 @@ export default function Navbar() {
                 <span className="text-white font-extrabold text-sm">T</span>
               </div>
               <div className="flex items-baseline">
-                <span className="text-xl font-bold text-[#1A1A2E]">TCD</span>
-                <span className="text-xl font-bold text-[#1A6FEF] ml-1">Tickets</span>
+                <span className="text-xl font-bold text-white">TCD</span>
+                <span className="text-xl font-bold text-white/80 ml-1">Tickets</span>
               </div>
             </Link>
           </div>
@@ -57,8 +57,8 @@ export default function Navbar() {
                 href={item.href}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                   pathname === item.href
-                    ? 'bg-[#1A6FEF] text-white shadow-md shadow-blue-200'
-                    : 'text-[#6B7280] hover:text-[#1A1A2E] hover:bg-gray-100'
+                    ? 'bg-white text-[#0E73B9] shadow-md'
+                    : 'text-white/80 hover:text-white hover:bg-white/10'
                 }`}
               >
                 {item.label}
@@ -72,7 +72,7 @@ export default function Navbar() {
               <div className="flex items-center gap-2">
                 <Link
                   href="/profile"
-                  className="flex items-center gap-2 hover:bg-gray-100 rounded-full px-3 py-1.5 transition"
+                  className="flex items-center gap-2 hover:bg-white/10 rounded-full px-3 py-1.5 transition"
                 >
                   {user.profilePicture ? (
                     <img
@@ -85,13 +85,13 @@ export default function Navbar() {
                       {getInitials(user.name)}
                     </div>
                   )}
-                  <span className="hidden md:block text-sm font-medium text-[#1A1A2E]">
+                  <span className="hidden md:block text-sm font-medium text-white">
                     {user.name.split(' ')[0]}
                   </span>
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-[#6B7280] hover:text-[#1A1A2E] text-sm font-medium px-3 py-2 rounded-full hover:bg-gray-100 transition"
+                  className="text-white/80 hover:text-white text-sm font-medium px-3 py-2 rounded-full hover:bg-white/10 transition"
                 >
                   Logout
                 </button>
@@ -100,13 +100,13 @@ export default function Navbar() {
               <div className="flex items-center gap-2">
                 <Link
                   href="/login"
-                  className="text-[#1A6FEF] text-sm font-semibold px-4 py-2 rounded-full hover:bg-blue-50 transition"
+                  className="text-white text-sm font-semibold px-4 py-2 rounded-full hover:bg-white/10 transition"
                 >
                   Login
                 </Link>
                 <Link
                   href="/signup"
-                  className="bg-[#1A6FEF] text-white text-sm font-semibold px-5 py-2 rounded-full hover:bg-[#0E4BAF] transition shadow-md shadow-blue-200"
+                  className="bg-white text-[#0E73B9] text-sm font-semibold px-5 py-2 rounded-full hover:bg-white/90 transition shadow-md"
                 >
                   Sign Up
                 </Link>
@@ -117,7 +117,7 @@ export default function Navbar() {
       </div>
 
       {/* Mobile Menu */}
-      <div className="md:hidden border-t border-gray-100 px-4 py-3 bg-white/90 backdrop-blur-lg">
+      <div className="md:hidden border-t border-white/20 px-4 py-3 bg-[#0E73B9]">
         <div className="flex flex-wrap gap-2">
           {navItems.map((item) => (
             <Link
@@ -125,8 +125,8 @@ export default function Navbar() {
               href={item.href}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
                 pathname === item.href
-                  ? 'bg-[#1A6FEF] text-white'
-                  : 'text-[#6B7280] hover:bg-gray-100'
+                  ? 'bg-white text-[#0E73B9]'
+                  : 'text-white/80 hover:bg-white/10'
               }`}
             >
               {item.label}

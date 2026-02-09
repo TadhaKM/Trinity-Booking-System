@@ -28,6 +28,33 @@ export default function OrganiserDashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [eventStats, setEventStats] = useState<EventStats[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDeleteEvent = async (eventId: string, title: string) => {
+    if (!user) return;
+    const confirmed = window.confirm(`Are you sure you want to delete "${title}"? This cannot be undone.`);
+    if (!confirmed) return;
+
+    setDeletingId(eventId);
+    try {
+      const res = await fetch(`/api/events/${eventId}?organiserId=${user.id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setEventStats((prev) => prev.filter((e) => e.id !== eventId));
+        if (stats) {
+          setStats({ ...stats, totalEvents: stats.totalEvents - 1 });
+        }
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to delete event');
+      }
+    } catch {
+      alert('Failed to delete event');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -283,12 +310,21 @@ export default function OrganiserDashboardPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <Link
-                          href={`/organiser/edit-event/${event.id}`}
-                          className="text-[#0d3b66] hover:text-[#0a2f52] font-medium text-sm"
-                        >
-                          Edit
-                        </Link>
+                        <div className="flex items-center gap-3">
+                          <Link
+                            href={`/organiser/edit-event/${event.id}`}
+                            className="text-[#0d3b66] hover:text-[#0a2f52] font-medium text-sm"
+                          >
+                            Edit
+                          </Link>
+                          <button
+                            onClick={() => handleDeleteEvent(event.id, event.title)}
+                            disabled={deletingId === event.id}
+                            className="text-red-600 hover:text-red-800 font-medium text-sm disabled:opacity-50"
+                          >
+                            {deletingId === event.id ? 'Deleting...' : 'Delete'}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

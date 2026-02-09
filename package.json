@@ -14,6 +14,7 @@
     "setup": "npm run db:push && npm run db:seed"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.74.0",
     "@libsql/client": "^0.8.0",
     "@prisma/adapter-libsql": "^5.22.0",
     "@prisma/client": "^5.22.0",

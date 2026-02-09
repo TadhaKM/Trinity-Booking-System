@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/auth-store';
+import { useChatStore } from '@/lib/chat-store';
 import { Society } from '@/lib/types';
 import ComboBox from '@/components/ComboBox';
 import ImageUpload from '@/components/ImageUpload';
@@ -24,6 +25,9 @@ interface ConflictEvent {
 export default function CreateEventPage() {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
+  const eventDraft = useChatStore((s) => s.eventDraft);
+  const setEventDraft = useChatStore((s) => s.setEventDraft);
+  const addChatMessage = useChatStore((s) => s.addMessage);
 
   const [societies, setSocieties] = useState<Society[]>([]);
   const [conflicts, setConflicts] = useState<ConflictEvent[]>([]);
@@ -73,6 +77,29 @@ export default function CreateEventPage() {
 
     fetchSocieties();
   }, [user, router]);
+
+  // Pre-fill form from chatbot event draft
+  useEffect(() => {
+    if (eventDraft) {
+      setFormData((prev) => ({
+        ...prev,
+        title: eventDraft.title || prev.title,
+        description: eventDraft.description || prev.description,
+        societyId: eventDraft.societyId || prev.societyId,
+        startDate: eventDraft.startDate || prev.startDate,
+        startTime: eventDraft.startTime || prev.startTime,
+        endDate: eventDraft.endDate || prev.endDate,
+        endTime: eventDraft.endTime || prev.endTime,
+        location: eventDraft.location || prev.location,
+        category: eventDraft.category || prev.category,
+        tags: eventDraft.tags || prev.tags,
+      }));
+      if (eventDraft.ticketTypes && eventDraft.ticketTypes.length > 0) {
+        setTicketTypes(eventDraft.ticketTypes);
+      }
+      setEventDraft(null);
+    }
+  }, [eventDraft, setEventDraft]);
 
   const checkConflicts = async () => {
     if (!formData.startDate || !formData.startTime || !formData.location) {
@@ -253,6 +280,11 @@ export default function CreateEventPage() {
 
       if (res.ok) {
         const data = await res.json();
+        addChatMessage({
+          role: 'assistant',
+          content: `Your event **"${formData.title}"** has been created successfully! You can view it on the event page.`,
+          actions: [{ type: 'NAVIGATE', payload: { path: `/events/${data.id}` } }],
+        });
         router.push(`/events/${data.id}`);
       } else {
         const errorData = await res.json();

@@ -166,3 +166,61 @@ export async function PUT(
     );
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ eventId: string }> }
+) {
+  try {
+    const { eventId } = await params;
+    const { searchParams } = new URL(request.url);
+    const organiserId = searchParams.get('organiserId');
+
+    if (!organiserId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+    });
+
+    if (!event) {
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+    }
+
+    // Check ownership or admin
+    const user = await prisma.user.findUnique({
+      where: { id: organiserId },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (event.organiserId !== organiserId && !user.isAdmin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
+    // Delete related records in order, then the event
+    await prisma.ticket.deleteMany({
+      where: { order: { eventId } },
+    });
+    await prisma.order.deleteMany({
+      where: { eventId },
+    });
+    await prisma.ticketType.deleteMany({
+      where: { eventId },
+    });
+    await prisma.event.delete({
+      where: { id: eventId },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting event:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete event' },
+      { status: 500 }
+    );
+  }
+}

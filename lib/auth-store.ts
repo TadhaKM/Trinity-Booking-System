@@ -23,15 +23,21 @@ export const useAuthStore = create<AuthStore>()(
       user: null,
       login: (user, remember = false) => {
         set({ user });
-        if (!remember && typeof window !== 'undefined') {
-          const data = JSON.stringify({ state: { user }, version: 0 });
-          sessionStorage.setItem('auth-storage-session', data);
+        if (typeof window !== 'undefined') {
+          // Clear previous account's chat history on login
+          localStorage.removeItem('chat-storage');
+          if (!remember) {
+            const data = JSON.stringify({ state: { user }, version: 0 });
+            sessionStorage.setItem('auth-storage-session', data);
+          }
         }
       },
       logout: () => {
         set({ user: null });
         if (typeof window !== 'undefined') {
           sessionStorage.removeItem('auth-storage-session');
+          // Clear chat history on logout
+          localStorage.removeItem('chat-storage');
         }
       },
       updateProfilePicture: (profilePicture) => {
