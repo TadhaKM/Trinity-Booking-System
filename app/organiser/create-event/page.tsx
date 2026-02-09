@@ -535,18 +535,65 @@ export default function CreateEventPage() {
             <label className="block text-sm font-medium mb-2 text-black">
               Location *
             </label>
-            <input
+            <ComboBox
               id="location"
-              type="text"
               value={formData.location}
-              onChange={(e) => {
-                setFormData({ ...formData, location: e.target.value });
+              onChange={(value) => {
+                setFormData({ ...formData, location: value });
                 if (errors.location) setErrors({ ...errors, location: '' });
               }}
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d3b66] text-black placeholder:text-gray-500 ${
-                errors.location ? 'border-red-500' : 'border-gray-300'
-              }`}
-              placeholder="e.g., Exam Hall, Trinity College"
+              options={[
+                { label: 'Arts Building', value: 'Arts Building' },
+                { label: 'Berkeley Library', value: 'Berkeley Library' },
+                { label: 'Biomedical Sciences Institute', value: 'Biomedical Sciences Institute' },
+                { label: 'Burke Theatre', value: 'Burke Theatre' },
+                { label: 'Business School (Tangent)', value: 'Business School (Tangent)' },
+                { label: 'Chapel', value: 'Chapel' },
+                { label: 'Chemistry Building', value: 'Chemistry Building' },
+                { label: 'College Green', value: 'College Green' },
+                { label: 'College Park', value: 'College Park' },
+                { label: 'Computer Science Building (O\'Reilly Institute)', value: "Computer Science Building (O'Reilly Institute)" },
+                { label: 'Dining Hall', value: 'Dining Hall' },
+                { label: 'Douglas Hyde Gallery', value: 'Douglas Hyde Gallery' },
+                { label: 'Edmund Burke Theatre', value: 'Edmund Burke Theatre' },
+                { label: 'Exam Hall', value: 'Exam Hall' },
+                { label: 'Fitzgerald Building', value: 'Fitzgerald Building' },
+                { label: 'Front Square', value: 'Front Square' },
+                { label: 'GMB (Graduates Memorial Building)', value: 'GMB (Graduates Memorial Building)' },
+                { label: 'Global Room', value: 'Global Room' },
+                { label: 'Hamilton Building', value: 'Hamilton Building' },
+                { label: 'House 6', value: 'House 6' },
+                { label: 'JM Synge Theatre', value: 'JM Synge Theatre' },
+                { label: 'Joly Theatre', value: 'Joly Theatre' },
+                { label: 'Lecky Library', value: 'Lecky Library' },
+                { label: 'Lloyd Building', value: 'Lloyd Building' },
+                { label: 'Long Room Hub', value: 'Long Room Hub' },
+                { label: 'Luce Hall', value: 'Luce Hall' },
+                { label: 'MacNeill Theatre', value: 'MacNeill Theatre' },
+                { label: 'Moyne Institute', value: 'Moyne Institute' },
+                { label: 'Museum Building', value: 'Museum Building' },
+                { label: 'New Square', value: 'New Square' },
+                { label: 'Old Library', value: 'Old Library' },
+                { label: 'Pav (Pavilion Bar)', value: 'Pav (Pavilion Bar)' },
+                { label: 'Printing House', value: 'Printing House' },
+                { label: 'Provost\'s House', value: "Provost's House" },
+                { label: 'Public Theatre', value: 'Public Theatre' },
+                { label: 'Regent House', value: 'Regent House' },
+                { label: 'Rubrics', value: 'Rubrics' },
+                { label: 'SAMI (Science & Art Museum Ireland)', value: 'SAMI (Science & Art Museum Ireland)' },
+                { label: 'Samuel Beckett Theatre', value: 'Samuel Beckett Theatre' },
+                { label: 'Science Gallery', value: 'Science Gallery' },
+                { label: 'Sports Centre', value: 'Sports Centre' },
+                { label: 'Student Centre (House 6)', value: 'Student Centre (House 6)' },
+                { label: 'Swift Theatre', value: 'Swift Theatre' },
+                { label: 'Tennis Pavilion', value: 'Tennis Pavilion' },
+                { label: 'The Phil (Room)', value: 'The Phil (Room)' },
+                { label: 'Ussher Library', value: 'Ussher Library' },
+                { label: 'Watts Building', value: 'Watts Building' },
+              ]}
+              placeholder="Search or type a venue..."
+              error={errors.location}
+              allowCustom
             />
             {errors.location && (
               <p className="mt-1 text-sm text-red-600">{errors.location}</p>

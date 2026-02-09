@@ -1,63 +1,25 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* TCD-inspired color scheme - Blue and White */
-  --background: 0 0% 100%; /* Pure white background */
-  --foreground: 0 0% 0%;
-  --card: 0 0% 100%; /* Pure white cards */
-  --card-foreground: 0 0% 0%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 0%;
-  --primary: 213 94% 30%; /* TCD Navy Blue #0d3b66 */
-  --primary-foreground: 0 0% 100%;
-  --secondary: 210 60% 95%; /* Light blue tint */
-  --secondary-foreground: 0 0% 0%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 0 0% 0%;
-  --accent: 210 80% 92%; /* Soft blue accent */
-  --accent-foreground: 0 0% 0%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 210 40% 90%;
-  --input: 210 40% 94%;
-  --ring: 213 94% 30%;
-  --radius: 0.5rem;
-
-  /* TCD Brand Colors */
-  --tcd-navy: 213 94% 30%; /* #0d3b66 */
-  --tcd-blue: 210 100% 40%; /* #0066cc */
-  --tcd-light-blue: 210 60% 95%; /* Light blue background */
-}
-
-/* Force light mode even on dark system preferences */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 0%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 0%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
-    --primary: 213 94% 30%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 60% 95%;
-    --secondary-foreground: 0 0% 0%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 0 0% 0%;
-    --accent: 210 80% 92%;
-    --accent-foreground: 0 0% 0%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 210 40% 90%;
-    --input: 210 40% 94%;
-    --ring: 213 94% 30%;
-  }
+  --blue-primary: #1A6FEF;
+  --blue-dark: #0E4BAF;
+  --blue-deeper: #0A2E6E;
+  --mint-start: #A8EDEA;
+  --mint-end: #59D4C8;
+  --orange-accent: #F5A623;
+  --bg-main: #EFF2F7;
+  --bg-card: #FFFFFF;
+  --text-primary: #1A1A2E;
+  --text-secondary: #6B7280;
+  --radius: 1rem;
 }
 
 * {
-  @apply border-border;
+  @apply border-gray-200;
 }
 
 html {
@@ -65,18 +27,14 @@ html {
 }
 
 body {
-  background-color: #ffffff !important;
-  color: #000000;
+  font-family: 'Outfit', sans-serif;
+  background: var(--bg-main);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Ensure all text is black by default */
-h1, h2, h3, h4, h5, h6, p, span, label, div {
-  color: inherit;
-}
-
-/* Override any grey text colors */
-.text-gray-500, .text-gray-600, .text-gray-700 {
-  color: #000000 !important;
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
 }
 
 @layer utilities {
@@ -85,12 +43,72 @@ h1, h2, h3, h4, h5, h6, p, span, label, div {
   }
 }
 
-/* TCD Brand Gradient */
-.tcd-gradient {
-  background: linear-gradient(135deg, hsl(213, 94%, 30%) 0%, hsl(210, 100%, 40%) 100%);
+/* Gradient card backgrounds */
+.card-gradient-mint {
+  background: linear-gradient(145deg, #A8EDEA 0%, #59D4C8 100%);
+}
+.card-gradient-blue {
+  background: linear-gradient(145deg, #89CFF0 0%, #4A90D9 100%);
+}
+.card-gradient-pink {
+  background: linear-gradient(145deg, #F5C6D0 0%, #E88EA1 100%);
+}
+.card-gradient-gold {
+  background: linear-gradient(145deg, #FFD89B 0%, #F5A623 100%);
+}
+.card-gradient-lavender {
+  background: linear-gradient(145deg, #C9B8E8 0%, #9B72CF 100%);
+}
+.card-gradient-peach {
+  background: linear-gradient(145deg, #FECFEF 0%, #FF9A9E 100%);
 }
 
-/* Light blue section backgrounds */
-.bg-tcd-light {
-  background-color: hsl(210, 60%, 97%);
+/* Stacked card shadows */
+.card-stack {
+  position: relative;
+}
+.card-stack::before,
+.card-stack::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 1.25rem;
+  z-index: -1;
+}
+.card-stack::before {
+  transform: rotate(-3deg) translateY(6px);
+  background: #F5A623;
+  opacity: 0.5;
+}
+.card-stack::after {
+  transform: rotate(-6deg) translateY(12px);
+  background: #C9B8E8;
+  opacity: 0.35;
+}
+
+/* Smooth hover lift */
+.hover-lift {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+}
+
+/* Badge pulse for "tickets left" */
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+.badge-pulse {
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+
+/* Pill button style */
+.btn-pill {
+  @apply px-6 py-3 rounded-full font-semibold transition-all duration-200;
+}
+.btn-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }

@@ -533,18 +533,66 @@ export default function EditEventPage({ params }: { params: Promise<{ eventId: s
 
           <div className="mt-4">
             <label className="block text-sm font-medium mb-2 text-black">Location *</label>
-            <input
+            <ComboBox
               id="location"
-              type="text"
               value={formData.location}
-              onChange={(e) => {
-                setFormData({ ...formData, location: e.target.value });
+              onChange={(value) => {
+                setFormData({ ...formData, location: value });
                 if (errors.location) setErrors({ ...errors, location: '' });
               }}
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d3b66] text-black placeholder:text-gray-500 ${
-                errors.location ? 'border-red-500' : 'border-gray-300'
-              }`}
-              placeholder="e.g., Exam Hall, Trinity College"
+              options={[
+                { label: 'Arts Building', value: 'Arts Building' },
+                { label: 'Beckett Theatre (Samuel Beckett Theatre)', value: 'Samuel Beckett Theatre' },
+                { label: 'Berkeley Library', value: 'Berkeley Library' },
+                { label: 'Biomedical Sciences Institute', value: 'Biomedical Sciences Institute' },
+                { label: 'Burke Theatre (Trinity Business School)', value: 'Burke Theatre' },
+                { label: 'Buttery', value: 'Buttery' },
+                { label: 'Chapel', value: 'Chapel' },
+                { label: 'Chemistry Building', value: 'Chemistry Building' },
+                { label: 'College Green (Front Square)', value: 'Front Square' },
+                { label: 'Commons (Dining Hall)', value: 'Dining Hall' },
+                { label: 'Computer Science (O\'Reilly Institute)', value: "O'Reilly Institute" },
+                { label: 'Cramton Auditorium', value: 'Cramton Auditorium' },
+                { label: 'Dunlop Oriel Gallery', value: 'Dunlop Oriel Gallery' },
+                { label: 'Edmund Burke Theatre', value: 'Edmund Burke Theatre' },
+                { label: 'Emmet Theatre', value: 'Emmet Theatre' },
+                { label: 'Engineering Building', value: 'Engineering Building' },
+                { label: 'Exam Hall', value: 'Exam Hall' },
+                { label: 'Fellows\' Square', value: "Fellows' Square" },
+                { label: 'Fitzgerald Building (Physics)', value: 'Fitzgerald Building' },
+                { label: 'GMB (Graduates Memorial Building)', value: 'Graduates Memorial Building' },
+                { label: 'Hamilton Building (Maths & Physics)', value: 'Hamilton Building' },
+                { label: 'Innovation Academy', value: 'Innovation Academy' },
+                { label: 'JM Synge Theatre', value: 'JM Synge Theatre' },
+                { label: 'Jonathan Swift Theatre', value: 'Jonathan Swift Theatre' },
+                { label: 'Lecky Library', value: 'Lecky Library' },
+                { label: 'Lloyd Building', value: 'Lloyd Building' },
+                { label: 'Long Room', value: 'Long Room' },
+                { label: 'MacNeill Theatre', value: 'MacNeill Theatre' },
+                { label: 'Moyne Institute', value: 'Moyne Institute' },
+                { label: 'Museum Building', value: 'Museum Building' },
+                { label: 'New Square', value: 'New Square' },
+                { label: 'O\'Reilly Institute (Computer Science)', value: "O'Reilly Institute" },
+                { label: 'Pav (Pavilion Bar)', value: 'Pav (Pavilion Bar)' },
+                { label: 'Pearse Street Library', value: 'Pearse Street Library' },
+                { label: 'Players Theatre', value: 'Players Theatre' },
+                { label: 'Printing House Square', value: 'Printing House Square' },
+                { label: 'Provost\'s House', value: "Provost's House" },
+                { label: 'Regent House', value: 'Regent House' },
+                { label: 'Rubrics', value: 'Rubrics' },
+                { label: 'Samuel Beckett Centre', value: 'Samuel Beckett Centre' },
+                { label: 'Science Gallery', value: 'Science Gallery' },
+                { label: 'Sports Centre (Trinity Sport)', value: 'Trinity Sport Centre' },
+                { label: 'Tanaka Building (Business School)', value: 'Tanaka Building' },
+                { label: 'The 1937 Reading Room', value: '1937 Reading Room' },
+                { label: 'Trinity Business School', value: 'Trinity Business School' },
+                { label: 'Trinity Trails (College Park)', value: 'College Park' },
+                { label: 'Ussher Library', value: 'Ussher Library' },
+                { label: 'Watts Building', value: 'Watts Building' },
+              ]}
+              placeholder="Search or type a venue..."
+              error={errors.location}
+              allowCustom
             />
             {errors.location && <p className="mt-1 text-sm text-red-600">{errors.location}</p>}
           </div>

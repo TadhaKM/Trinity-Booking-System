@@ -149,54 +149,48 @@ function SearchPageContent() {
               <div
                 key={event.id}
                 onClick={() => setSelectedEvent(event)}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition cursor-pointer"
+                className="group cursor-pointer hover-lift"
               >
-                <div className="relative h-48">
-                  {event.imageUrl.startsWith('data:') ? (
-                    <img src={event.imageUrl} alt={event.title} className="absolute inset-0 w-full h-full object-cover" />
-                  ) : (
-                    <Image
-                      src={event.imageUrl}
-                      alt={event.title}
-                      fill
-                      className="object-cover"
-                    />
-                  )}
-                  <div className="absolute top-3 right-3 bg-white text-black px-3 py-1 rounded-full text-sm font-semibold">
-                    {event.category}
-                  </div>
-                </div>
-                <div className="p-5">
-                  <h3 className="text-lg font-bold text-black mb-2 line-clamp-1">
-                    {event.title}
-                  </h3>
-                  {event.society && (
-                    <p className="text-sm text-blue-600 mb-2">
-                      {event.society.name}
-                    </p>
-                  )}
-                  <p className="text-sm text-black mb-3 line-clamp-2">
-                    {event.description}
-                  </p>
-                  <div className="flex items-center justify-between text-sm">
-                    <div>
-                      <p className="text-black font-medium">
-                        {formatDate(event.startDate)}
-                      </p>
-                      <p className="text-black">{event.location}</p>
+                <div className="bg-white rounded-2xl overflow-hidden shadow-lg shadow-gray-200/60">
+                  <div className="relative h-48 card-gradient-mint">
+                    {event.imageUrl.startsWith('data:') ? (
+                      <img src={event.imageUrl} alt={event.title} className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-60" />
+                    ) : (
+                      <Image
+                        src={event.imageUrl}
+                        alt={event.title}
+                        fill
+                        className="object-cover mix-blend-overlay opacity-60"
+                      />
+                    )}
+                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-[#1A1A2E] px-3 py-1 rounded-full text-xs font-semibold">
+                      {event.category}
                     </div>
-                    <div className="text-right">
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <h3 className="text-lg font-bold text-white drop-shadow-lg line-clamp-1">{event.title}</h3>
+                    </div>
+                  </div>
+                  <div className="p-5">
+                    {event.society && (
+                      <p className="text-sm text-[#1A6FEF] font-medium mb-2">{event.society.name}</p>
+                    )}
+                    <div className="flex items-center gap-3 text-sm text-[#6B7280] mb-3">
+                      <span>{formatDate(event.startDate)}</span>
+                      <span className="truncate">{event.location}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
                       {event.ticketTypes && event.ticketTypes.length > 0 && (
-                        <p className="font-bold text-blue-600">
+                        <span className="text-lg font-bold text-[#1A6FEF]">
                           {event.ticketTypes[0].price === 0
                             ? 'Free'
-                            : `From ${formatPrice(
-                                Math.min(
-                                  ...event.ticketTypes.map((tt) => tt.price)
-                                )
-                              )}`}
-                        </p>
+                            : formatPrice(Math.min(...event.ticketTypes.map((tt) => tt.price)))}
+                        </span>
                       )}
+                      <div className="w-9 h-9 rounded-full bg-[#1A6FEF] flex items-center justify-center shadow-md shadow-blue-200 group-hover:scale-110 transition-transform">
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
                     </div>
                   </div>
                 </div>
