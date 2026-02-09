@@ -76,7 +76,7 @@ export default function HomePage() {
           </div>
           <div className="relative px-8 py-14 md:px-14 md:py-20 text-white">
             <p className="text-sm font-medium text-[#A8EDEA] mb-3 tracking-wide uppercase">Welcome back</p>
-            <h1 className="text-4xl md:text-5xl font-extrabold mb-4 leading-tight">
+            <h1 className="text-4xl md:text-5xl font-extrabold mb-4 leading-tight text-white">
               Hey, {user.name.split(' ')[0]}! 👋
             </h1>
             <p className="text-lg text-white/80 mb-8 max-w-lg">
@@ -104,7 +104,7 @@ export default function HomePage() {
           </div>
           <div className="relative px-8 py-14 md:px-14 md:py-20 text-white">
             <p className="text-sm font-medium text-[#A8EDEA] mb-3 tracking-wide uppercase">Trinity College Dublin</p>
-            <h1 className="text-4xl md:text-5xl font-extrabold mb-4 leading-tight">
+            <h1 className="text-4xl md:text-5xl font-extrabold mb-4 leading-tight text-white">
               Discover Trinity Events
             </h1>
             <p className="text-lg text-white/80 mb-8 max-w-lg">
