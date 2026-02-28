@@ -259,3 +259,12 @@ function LoginContent() {
     </div>
   );
 }
+
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen bg-[#EFF2F7]"><div className="w-16 h-16 rounded-full border-4 border-[#A8EDEA]/30 border-t-[#1A6FEF] animate-spin" /></div>}>
+      <LoginContent />
+    </Suspense>
+  );
+}
