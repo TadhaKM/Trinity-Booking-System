@@ -50,8 +50,8 @@ export function proxy(request: NextRequest) {
     "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // 'unsafe-inline' required for Next.js inline hydration scripts; 'unsafe-eval' for Turbopack dev runtime
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob: https://images.unsplash.com https://cdn.britannica.com https://upload.wikimedia.org",
-    "connect-src 'self' https://api.anthropic.com",
+    "img-src 'self' data: blob: https://images.unsplash.com https://cdn.britannica.com https://upload.wikimedia.org https://lh3.googleusercontent.com",
+    "connect-src 'self' https://api.anthropic.com https://auth.emergentagent.com https://demobackend.emergentagent.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
