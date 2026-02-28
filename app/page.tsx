@@ -72,11 +72,14 @@ export default function HomePage() {
       {/* HERO SECTION                                    */}
       {/* ═══════════════════════════════════════════════ */}
       <section className="relative min-h-[85vh] flex items-center overflow-hidden" data-testid="hero-section">
-        {/* Animated background blobs */}
+        {/* Solid background with geometric accents */}
         <div className="absolute inset-0 -z-10 bg-[#EFF2F7]">
-          <div className="absolute top-[-20%] right-[-10%] w-[700px] h-[700px] bg-gradient-to-br from-[#A8EDEA]/25 to-[#59D4C8]/25 rounded-full blur-3xl animate-float" />
-          <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-gradient-to-tr from-[#1A6FEF]/15 to-[#0A2E6E]/15 rounded-full blur-3xl animate-float-delayed" />
-          <div className="absolute top-[40%] left-[50%] w-[300px] h-[300px] bg-[#F5A623]/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
+          <div className="absolute inset-0 noise-overlay" />
+          <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-[#59D4C8]/8 rounded-full blur-3xl animate-float" />
+          <div className="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-[#1A6FEF]/8 rounded-full blur-3xl animate-float-delayed" />
+          {/* Sharp geometric shapes */}
+          <div className="absolute top-24 right-24 w-48 h-48 border border-[#0A2E6E]/5 rounded-full hidden lg:block" />
+          <div className="absolute bottom-32 left-16 w-20 h-20 border border-[#59D4C8]/10 rounded-2xl rotate-12 hidden lg:block" />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
@@ -343,7 +346,7 @@ export default function HomePage() {
       {/* ═══════════════════════════════════════════════ */}
       {!user && (
         <section className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 transition-all duration-700 ease-out ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`} style={{ transitionDelay: '800ms' }} data-testid="cta-section">
-          <div className="relative rounded-[2rem] overflow-hidden bg-gradient-to-br from-[#0A2E6E] via-[#1A6FEF] to-[#59D4C8] p-12 md:p-16 text-center noise-overlay gradient-bg-animated">
+          <div className="relative rounded-[2rem] overflow-hidden bg-[#0A2E6E] p-12 md:p-16 text-center noise-overlay">
             <div className="relative z-10">
               <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-4 text-balance">
                 Ready to discover your next experience?
