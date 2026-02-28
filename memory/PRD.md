@@ -10,6 +10,14 @@ Make the Landing page look a lot nicer and professional, keep all features alrea
 
 ## What's Been Implemented (Jan 28, 2026)
 
+### Login & Signup Page Redesign
+- **Split-screen layout**: Left panel with animated gradient (blue-to-teal), floating blobs, TCD branding, tagline, and campus imagery; Right panel with form card
+- **Icon-adorned inputs**: Envelope for email, lock for password, user for name, shield for confirm password
+- **Enhanced interactions**: Smooth hover/focus transitions, password visibility toggle with hover states, animated entrance
+- **Login left panel**: "Welcome back to campus life." tagline + floating campus image card with "Live events happening now"
+- **Signup left panel**: "Join the Trinity community." tagline + feature list (Book tickets instantly, Connect with 50+ societies, Never miss campus events)
+- **Preserved all functionality**: Validation, role selection, password strength indicator, caps lock detection, remember me
+
 ### Landing Page Redesign - "Electric Academia" Theme
 - **Floating Glassmorphic Navbar**: Detached pill-shaped nav with backdrop blur, scroll-aware transparency
 - **Split Hero Layout**: Massive typography left column + floating image with accent cards right column
