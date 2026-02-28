@@ -1,38 +1,39 @@
+/**
+ * POST /api/bookings/create
+ *
+ * Security hardening applied:
+ *  - IP-based rate limiting (30 req/min) — OWASP A07
+ *  - Zod schema validation (CreateBookingSchema) — OWASP A03
+ *  - No internal error details leaked to caller — OWASP A05
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { generateQRCode, calculateFees, applyCoupon } from '@/lib/utils';
+import { rateLimit, getClientIp, rateLimitResponse, LIMITS } from '@/lib/rate-limit';
+import { CreateBookingSchema, zodErrors } from '@/lib/validation';
 
 export async function POST(request: NextRequest) {
+  // ── 1. Rate limiting ────────────────────────────────────────────────────────
+  const ip = getClientIp(request);
+  const rl = rateLimit('bookings:create', ip, LIMITS.BOOKING.limit, LIMITS.BOOKING.windowMs);
+  if (!rl.success) return rateLimitResponse(rl.retryAfterMs);
+
   try {
-    const { userId, eventId, ticketSelections, couponCode } = await request.json();
-
-    // Validate required fields
-    if (!userId) {
+    // ── 2. Parse & validate input ─────────────────────────────────────────────
+    const body = await request.json();
+    const parsed = CreateBookingSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'User ID is required. Please log in again.' },
+        { error: zodErrors(parsed) },
         { status: 400 }
       );
     }
 
-    if (!eventId) {
-      return NextResponse.json(
-        { error: 'Event ID is required.' },
-        { status: 400 }
-      );
-    }
+    const { userId, eventId, ticketSelections, couponCode } = parsed.data;
 
-    if (!ticketSelections || ticketSelections.length === 0) {
-      return NextResponse.json(
-        { error: 'Please select at least one ticket.' },
-        { status: 400 }
-      );
-    }
-
-    // Verify user exists
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-
+    // ── 3. Verify user & event exist ──────────────────────────────────────────
+    const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       return NextResponse.json(
         { error: 'User not found. Please log in again.' },
@@ -40,11 +41,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify event exists
-    const event = await prisma.event.findUnique({
-      where: { id: eventId },
-    });
-
+    const event = await prisma.event.findUnique({ where: { id: eventId } });
     if (!event) {
       return NextResponse.json(
         { error: 'Event not found.' },
@@ -52,7 +49,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate ticket availability
+    // ── 4. Validate ticket availability ───────────────────────────────────────
     for (const selection of ticketSelections) {
       const ticketType = await prisma.ticketType.findUnique({
         where: { id: selection.ticketTypeId },
@@ -60,20 +57,20 @@ export async function POST(request: NextRequest) {
 
       if (!ticketType) {
         return NextResponse.json(
-          { error: 'Invalid ticket type' },
+          { error: 'Invalid ticket type.' },
           { status: 400 }
         );
       }
 
       if (ticketType.available < selection.quantity) {
         return NextResponse.json(
-          { error: `Not enough tickets available for ${ticketType.name}` },
+          { error: `Not enough tickets available for ${ticketType.name}.` },
           { status: 400 }
         );
       }
     }
 
-    // Calculate subtotal
+    // ── 5. Calculate subtotal ─────────────────────────────────────────────────
     let subtotal = 0;
     for (const selection of ticketSelections) {
       const ticketType = await prisma.ticketType.findUnique({
@@ -84,8 +81,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Apply coupon if provided
-    let discount = 0;
+    // ── 6. Apply coupon (if provided) ─────────────────────────────────────────
     let couponId = null;
     if (couponCode) {
       const coupon = await prisma.coupon.findFirst({
@@ -94,11 +90,9 @@ export async function POST(request: NextRequest) {
 
       if (coupon && coupon.expiresAt >= new Date() && coupon.usedCount < coupon.maxUses) {
         const discountInfo = applyCoupon(subtotal, coupon.discountPercent);
-        discount = discountInfo.discount;
         subtotal = discountInfo.newAmount;
         couponId = coupon.id;
 
-        // Increment coupon usage
         await prisma.coupon.update({
           where: { id: coupon.id },
           data: { usedCount: { increment: 1 } },
@@ -106,24 +100,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Calculate fees and total
+    // ── 7. Calculate fees and total ───────────────────────────────────────────
     const { bookingFee, total } = calculateFees(subtotal);
 
-    // Create order and tickets in a transaction
+    // ── 8. Create order & tickets in a transaction ────────────────────────────
     const order = await prisma.$transaction(async (tx) => {
-      // Update ticket availability
       for (const selection of ticketSelections) {
         await tx.ticketType.update({
           where: { id: selection.ticketTypeId },
-          data: {
-            available: {
-              decrement: selection.quantity,
-            },
-          },
+          data: { available: { decrement: selection.quantity } },
         });
       }
 
-      // Create order
       const newOrder = await tx.order.create({
         data: {
           userId,
@@ -131,21 +119,19 @@ export async function POST(request: NextRequest) {
           totalAmount: total,
           status: 'CONFIRMED',
           tickets: {
-            create: ticketSelections.flatMap((selection: any) =>
+            create: ticketSelections.flatMap((selection) =>
               Array.from({ length: selection.quantity }, () => ({
                 ticketTypeId: selection.ticketTypeId,
-                price: 0, // Will be updated below
+                price: 0,
                 qrCode: generateQRCode(),
               }))
             ),
           },
         },
-        include: {
-          tickets: true,
-        },
+        include: { tickets: true },
       });
 
-      // Update ticket prices (workaround for promise issue)
+      // Update each ticket with its actual price
       for (const ticket of newOrder.tickets) {
         const ticketType = await tx.ticketType.findUnique({
           where: { id: ticket.ticketTypeId },
@@ -165,7 +151,6 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Error creating booking:', error);
 
-    // Handle specific Prisma errors
     if (error.code === 'P2002') {
       return NextResponse.json(
         { error: 'A duplicate booking was detected. Please try again.' },
@@ -175,14 +160,13 @@ export async function POST(request: NextRequest) {
 
     if (error.code === 'P2003') {
       return NextResponse.json(
-        { error: 'Invalid reference: The user, event, or ticket type does not exist.' },
+        { error: 'Invalid reference: the user, event, or ticket type does not exist.' },
         { status: 400 }
       );
     }
 
-    const errorMessage = error.message || 'Unknown error';
     return NextResponse.json(
-      { error: `Failed to create booking: ${errorMessage}` },
+      { error: 'Failed to create booking. Please try again.' },
       { status: 500 }
     );
   }

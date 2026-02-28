@@ -1,12 +1,36 @@
+/**
+ * GET /api/search
+ *
+ * Security hardening applied:
+ *  - IP-based rate limiting (60 req/min) — OWASP A07
+ *  - Zod query-param validation with length limits — OWASP A03
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { rateLimit, getClientIp, rateLimitResponse, LIMITS } from '@/lib/rate-limit';
+import { SearchSchema } from '@/lib/validation';
 
 export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const query = searchParams.get('q') || '';
-    const category = searchParams.get('category') || '';
+  // ── 1. Rate limiting ────────────────────────────────────────────────────────
+  const ip = getClientIp(request);
+  const rl = rateLimit('search', ip, LIMITS.SEARCH.limit, LIMITS.SEARCH.windowMs);
+  if (!rl.success) return rateLimitResponse(rl.retryAfterMs);
 
+  // ── 2. Validate query params ────────────────────────────────────────────────
+  const { searchParams } = new URL(request.url);
+  const parsed = SearchSchema.safeParse({
+    q: searchParams.get('q') ?? undefined,
+    category: searchParams.get('category') ?? undefined,
+  });
+
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid search parameters.' }, { status: 400 });
+  }
+
+  const { q: query = '', category = '' } = parsed.data;
+
+  try {
     const where: any = {
       startDate: { gte: new Date() },
     };

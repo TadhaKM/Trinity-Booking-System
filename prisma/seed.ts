@@ -4,6 +4,8 @@ const prisma = new PrismaClient();
 
 async function main() {
   // Clear existing data
+  await prisma.postLike.deleteMany();
+  await prisma.societyPost.deleteMany();
   await prisma.ticket.deleteMany();
   await prisma.order.deleteMany();
   await prisma.ticketType.deleteMany();
@@ -737,11 +739,135 @@ async function main() {
     ],
   });
 
+  // Create society promotional posts (mock Instagram-style posts for the 6 main societies)
+  const posts = await Promise.all([
+    // DU Players — pinned promo post
+    prisma.societyPost.create({
+      data: {
+        societyId: societies[0].id,
+        eventId: events[0].id,
+        imageUrl: 'https://images.unsplash.com/photo-1503095396549-807759245b35?w=800',
+        caption: '🎭 Waiting for Godot opens next week! One of Beckett\'s greatest works, brought to life on the Samuel Beckett Theatre stage. Tickets going fast — grab yours now! #DUPlayers #TrinityTheatre #WaitingForGodot',
+        isPinned: true,
+      },
+    }),
+    // DU Players — second post
+    prisma.societyPost.create({
+      data: {
+        societyId: societies[0].id,
+        imageUrl: 'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=800',
+        caption: '🌟 Auditions for our Spring term production are OPEN! No experience required — just passion for theatre. DM us or drop into rehearsal on Thursday. #Auditions #Theatre #TrinityCollege',
+        isPinned: false,
+      },
+    }),
+
+    // CS Society — pinned promo post
+    prisma.societyPost.create({
+      data: {
+        societyId: societies[1].id,
+        eventId: events[1].id,
+        imageUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800',
+        caption: '🤖 AI & ML Workshop this week in the Hamilton Building! We\'ll be building neural networks with TensorFlow. Bring your laptop and your curiosity. Limited spots — book now! #ArtificialIntelligence #TrinityCS #Hackathon',
+        isPinned: true,
+      },
+    }),
+    // CS Society — second post
+    prisma.societyPost.create({
+      data: {
+        societyId: societies[1].id,
+        imageUrl: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800',
+        caption: '💻 Trinity Hackathon 2026 is COMING! Mark your calendars for March 20-21. 24 hours, amazing prizes, and free pizza. Register your team now! #TrinityHackathon #Coding #BuildSomethingCool',
+        isPinned: false,
+      },
+    }),
+
+    // Celtic Music Society — pinned promo post
+    prisma.societyPost.create({
+      data: {
+        societyId: societies[2].id,
+        eventId: events[2].id,
+        imageUrl: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=800',
+        caption: '🎸 Trad Session tonight at The Buttery! All musicians welcome — fiddles, flutes, uilleann pipes, you name it. First time? Perfect! Come along, the craic will be mighty. Free entry! #TradMusic #IrishMusic #TheButtery',
+        isPinned: true,
+      },
+    }),
+    // Celtic Music Society — second post
+    prisma.societyPost.create({
+      data: {
+        societyId: societies[2].id,
+        imageUrl: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=800',
+        caption: '☘️ St. Patrick\'s Day Concert tickets now on sale! The Chieftains Tribute night at the Exam Hall — this will be an evening to remember. Céad míle fáilte! #StPatricksDay #IrishMusic #Celtic',
+        isPinned: false,
+      },
+    }),
+
+    // Philosophical Society — pinned promo post
+    prisma.societyPost.create({
+      data: {
+        societyId: societies[3].id,
+        eventId: events[4].id,
+        imageUrl: 'https://images.unsplash.com/photo-1574168104291-ac4e706a3adb?w=800',
+        caption: '🎤 DEBATE NIGHT: "This house believes climate activism justifies civil disobedience." Feb 27th, GMB. Come ready to argue. Speakers include leading academics and activists. #ThePhil #Debate #ClimateAction',
+        isPinned: true,
+      },
+    }),
+
+    // Dance Society — pinned promo post
+    prisma.societyPost.create({
+      data: {
+        societyId: societies[4].id,
+        eventId: events[5].id,
+        imageUrl: 'https://images.unsplash.com/photo-1504609813442-a8924e83f76e?w=800',
+        caption: '💃 Winter Dance Showcase tickets are here! Join us for an incredible evening of ballet, contemporary, hip-hop, and ballroom. Our biggest show of the year. #DanceSociety #TrinityDance #WinterShowcase',
+        isPinned: true,
+      },
+    }),
+    // Dance Society — second post
+    prisma.societyPost.create({
+      data: {
+        societyId: societies[4].id,
+        imageUrl: 'https://images.unsplash.com/photo-1508807526345-15e9b5f4eaff?w=800',
+        caption: '🕺 Salsa Night this Saturday! No partner, no experience needed. Just good vibes and great moves. €4 entry — see you on the floor! #SalsaNight #Dance #Beginner',
+        isPinned: false,
+      },
+    }),
+
+    // Film Society — pinned promo post
+    prisma.societyPost.create({
+      data: {
+        societyId: societies[5].id,
+        eventId: events[6].id,
+        imageUrl: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800',
+        caption: '🎬 The Dude abides. Screening "The Big Lebowski" this Friday night at the Science Gallery. Cult classic, late-night vibes, €3 entry. You don\'t have to be a fan to enjoy this one. #FilmSociety #BigLebowski #CultClassic',
+        isPinned: true,
+      },
+    }),
+  ]);
+
+  // Add sample post likes
+  await prisma.postLike.createMany({
+    data: [
+      // John Smith likes DU Players + CS Society posts
+      { userId: users[0].id, postId: posts[0].id },
+      { userId: users[0].id, postId: posts[2].id },
+      // Sarah Jones likes Celtic Music + Film Society posts
+      { userId: users[1].id, postId: posts[4].id },
+      { userId: users[1].id, postId: posts[8].id },
+      // Alice Murphy likes Dance Society + Phil posts
+      { userId: users[2].id, postId: posts[6].id },
+      { userId: users[2].id, postId: posts[5].id },
+      // Bob O'Brien likes CS Society + Celtic posts
+      { userId: users[3].id, postId: posts[2].id },
+      { userId: users[3].id, postId: posts[4].id },
+    ],
+  });
+
   console.log('Database seeded successfully!');
   console.log(`Created ${users.length} users`);
   console.log(`Created ${societies.length} societies`);
   console.log(`Created ${events.length} events`);
   console.log(`Created ${coupons.length} coupons`);
+  console.log(`Created ${posts.length} society posts`);
 }
 
 main()

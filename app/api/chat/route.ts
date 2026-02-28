@@ -1,19 +1,32 @@
+/**
+ * POST /api/chat
+ *
+ * Security hardening applied:
+ *  - IP-based rate limiting (20 req/min) — OWASP A07
+ *  - Zod schema validation (ChatRequestSchema) — OWASP A03
+ *  - Server-side auth resolution — never trusts client role — OWASP A01
+ *  - Tool filtering by role — OWASP A01
+ *  - ANTHROPIC_API_KEY never exposed to client — OWASP A02
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { prisma } from '@/lib/db';
 import { chatTools, filterToolsByRole } from '@/lib/chat-tools';
 import { buildSystemPrompt, AuthContext } from '@/lib/chat-system-prompt';
+import { rateLimit, getClientIp, rateLimitResponse, LIMITS } from '@/lib/rate-limit';
+import { ChatRequestSchema, zodErrors } from '@/lib/validation';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
 });
 
-interface ChatRequestBody {
-  messages: { role: 'user' | 'assistant'; content: string }[];
-  userId?: string;
-}
-
 export async function POST(request: NextRequest) {
+  // ── 1. Rate limiting ────────────────────────────────────────────────────────
+  const ip = getClientIp(request);
+  const rl = rateLimit('chat', ip, LIMITS.CHAT.limit, LIMITS.CHAT.windowMs);
+  if (!rl.success) return rateLimitResponse(rl.retryAfterMs);
+
   try {
     if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json(
@@ -22,20 +35,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body: ChatRequestBody = await request.json();
-    const { messages, userId } = body;
-
-    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    // ── 2. Parse & validate input ─────────────────────────────────────────────
+    const body = await request.json();
+    const parsed = ChatRequestSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Messages array is required.' },
+        { error: zodErrors(parsed) },
         { status: 400 }
       );
     }
 
-    // 1. Resolve auth context from DB
+    const { messages, userId } = parsed.data;
+
+    // ── 3. Resolve auth context from DB ──────────────────────────────────────
     const authContext = await resolveAuthContext(userId);
 
-    // 2. Guest rate limiting (server-side check)
+    // ── 4. Guest message cap ──────────────────────────────────────────────────
     if (authContext.role === 'guest') {
       const userMessageCount = messages.filter((m) => m.role === 'user').length;
       authContext.guestMessageCount = userMessageCount;
@@ -48,17 +63,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 3. Build system prompt & filter tools by role
+    // ── 5. Build system prompt & filter tools by role ─────────────────────────
     const systemPrompt = buildSystemPrompt(authContext);
     const allowedTools = filterToolsByRole(authContext.role);
 
-    // 4. Format messages for Claude API
+    // ── 6. Format messages for Claude API ────────────────────────────────────
     const claudeMessages: Anthropic.MessageParam[] = messages.map((m) => ({
       role: m.role as 'user' | 'assistant',
       content: m.content,
     }));
 
-    // 5. Call Claude with agentic tool loop (max 3 iterations)
+    // ── 7. Call Claude with agentic tool loop (max 3 iterations) ─────────────
     let finalText = '';
     const allActions: any[] = [];
     let currentMessages = [...claudeMessages];
