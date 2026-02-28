@@ -1,0 +1,121 @@
+{
+  "design_system": {
+    "typography": {
+      "font_family": "Outfit, sans-serif",
+      "scale": {
+        "display": "text-6xl md:text-8xl font-black tracking-tighter leading-none",
+        "h1": "text-4xl md:text-6xl font-bold tracking-tight",
+        "h2": "text-3xl md:text-4xl font-bold tracking-tight",
+        "h3": "text-2xl font-bold",
+        "body": "text-base md:text-lg leading-relaxed text-slate-600",
+        "caption": "text-sm font-medium tracking-wide uppercase text-slate-500"
+      }
+    },
+    "colors": {
+      "palette": {
+        "brand": {
+          "primary": "#1A6FEF",
+          "dark": "#0A2E6E",
+          "mint": "#59D4C8",
+          "mint_light": "#A8EDEA",
+          "orange": "#F5A623",
+          "bg": "#EFF2F7"
+        },
+        "neutral": {
+          "white": "#FFFFFF",
+          "glass": "rgba(255, 255, 255, 0.7)",
+          "glass_dark": "rgba(10, 46, 110, 0.8)"
+        }
+      },
+      "gradients": {
+        "hero": "bg-gradient-to-br from-[#0A2E6E] via-[#1A6FEF] to-[#59D4C8]",
+        "card_mint": "bg-gradient-to-br from-[#A8EDEA] to-[#59D4C8]",
+        "card_blue": "bg-gradient-to-br from-[#89CFF0] to-[#4A90D9]",
+        "text_main": "bg-clip-text text-transparent bg-gradient-to-r from-[#0A2E6E] to-[#1A6FEF]"
+      }
+    },
+    "shadows": {
+      "glass": "0 8px 32px 0 rgba(31, 38, 135, 0.15)",
+      "neon": "0 0 20px rgba(89, 212, 200, 0.5)",
+      "floating": "0 20px 40px -10px rgba(0,0,0,0.15)"
+    },
+    "radius": {
+      "default": "1rem",
+      "pill": "9999px",
+      "card": "1.5rem"
+    }
+  },
+  "animations": {
+    "keyframes": {
+      "float": {
+        "0%, 100%": { "transform": "translateY(0)" },
+        "50%": { "transform": "translateY(-20px)" }
+      },
+      "pulse-glow": {
+        "0%, 100%": { "opacity": "1", "box-shadow": "0 0 20px rgba(89, 212, 200, 0.5)" },
+        "50%": { "opacity": "0.8", "box-shadow": "0 0 40px rgba(89, 212, 200, 0.8)" }
+      },
+      "slide-up": {
+        "0%": { "transform": "translateY(20px)", "opacity": "0" },
+        "100%": { "transform": "translateY(0)", "opacity": "1" }
+      },
+      "ticker": {
+        "0%": { "transform": "translateX(0)" },
+        "100%": { "transform": "translateX(-100%)" }
+      }
+    },
+    "classes": {
+      "animate-float": "animate-[float_6s_ease-in-out_infinite]",
+      "animate-float-delayed": "animate-[float_6s_ease-in-out_3s_infinite]",
+      "animate-pulse-glow": "animate-[pulse-glow_3s_ease-in-out_infinite]",
+      "animate-slide-up": "animate-[slide-up_0.8s_ease-out_forwards]",
+      "animate-ticker": "animate-[ticker_30s_linear_infinite]"
+    }
+  },
+  "components": {
+    "navbar": {
+      "style": "fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-7xl rounded-full border border-white/20 bg-white/70 backdrop-blur-xl shadow-glass px-6 py-3 transition-all duration-300",
+      "logo": "font-black text-2xl tracking-tighter text-[#0A2E6E]",
+      "item": "text-sm font-semibold text-slate-600 hover:text-[#1A6FEF] transition-colors px-4 py-2 rounded-full hover:bg-white/50"
+    },
+    "hero": {
+      "layout": "grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[85vh] pt-32 pb-20 relative overflow-hidden",
+      "background": "absolute inset-0 -z-10 bg-[#EFF2F7]",
+      "decorations": [
+        "absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-br from-[#A8EDEA]/30 to-[#59D4C8]/30 rounded-full blur-3xl opacity-50 animate-float",
+        "absolute bottom-0 left-0 w-[600px] h-[600px] bg-gradient-to-tr from-[#1A6FEF]/20 to-[#0A2E6E]/20 rounded-full blur-3xl opacity-50 animate-float-delayed"
+      ],
+      "typography": "text-balance"
+    },
+    "event_card": {
+      "base": "group relative overflow-hidden rounded-[2rem] bg-white shadow-xl transition-all duration-500 hover:shadow-2xl hover:-translate-y-2",
+      "image_container": "relative h-64 overflow-hidden",
+      "image": "object-cover transition-transform duration-700 group-hover:scale-110",
+      "overlay": "absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity",
+      "content": "absolute bottom-0 left-0 right-0 p-6 translate-y-2 group-hover:translate-y-0 transition-transform duration-300",
+      "badge": "absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-[#0A2E6E] shadow-sm"
+    },
+    "booking_modal": {
+      "overlay": "fixed inset-0 bg-[#0A2E6E]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4",
+      "container": "bg-white rounded-[2rem] w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl animate-slide-up",
+      "header": "bg-gradient-to-r from-[#0A2E6E] to-[#1A6FEF] p-8 text-white relative overflow-hidden"
+    }
+  },
+  "layout_strategies": {
+    "grid_system": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6",
+    "bento_logic": {
+      "featured": "lg:col-span-8 lg:row-span-2",
+      "standard": "lg:col-span-4",
+      "tall": "lg:col-span-4 lg:row-span-2"
+    }
+  },
+  "instructions_to_main_agent": {
+    "step_1": "Update `tailwind.config.ts` to include the new color palette (extend > colors > brand) and keyframes (extend > keyframes).",
+    "step_2": "Update `app/globals.css` to add `@layer utilities` for glassmorphism (.glass), text balance (.text-balance), and hide scrollbar utilities.",
+    "step_3": "Refactor `components/Navbar.tsx` to use the 'Floating Pill' design (detached from top) with glassmorphism.",
+    "step_4": "Refactor `app/page.tsx`: Replace the standard Hero with the Split Hero layout. Implement the Bento Grid for events (first event gets `col-span-2` logic). Replace Category grid with a horizontal scroll container or marquee.",
+    "step_5": "Refactor `components/BookingModal.tsx` to match the new rounded/glass aesthetics. Ensure `z-index` is high enough.",
+    "step_6": "Verify that `use client` is preserved in all components.",
+    "critical_note": "Do not delete any existing logic (fetching, booking, auth). Only update the JSX structure and CSS classes. Maintain all `data-testid` attributes if present, or add them if missing."
+  }
+}
