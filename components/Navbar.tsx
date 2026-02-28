@@ -152,24 +152,37 @@ export default function Navbar() {
           </div>
         </div>
 
-      {/* Mobile Menu */}
-      <div className="md:hidden border-t border-white/20 px-4 py-3 bg-[#0E73B9]">
-        <div className="flex flex-nowrap gap-2 overflow-x-auto scrollbar-hide">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
-                pathname === item.href
-                  ? 'bg-white text-[#0E73B9]'
-                  : 'text-white/80 hover:bg-white/10'
-              }`}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </div>
-      </div>
-    </nav>
+        {/* Mobile Menu */}
+        {mobileOpen && (
+          <div className="md:hidden border-t border-slate-200/50 px-5 py-4 bg-white/90 backdrop-blur-xl rounded-b-3xl" data-testid="nav-mobile-menu">
+            <div className="flex flex-col gap-1">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                    pathname === item.href
+                      ? 'bg-[#0A2E6E] text-white'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+              {!user && (
+                <div className="flex gap-2 mt-3 pt-3 border-t border-slate-200/50">
+                  <Link href="/login" onClick={() => setMobileOpen(false)} className="flex-1 text-center text-[#0A2E6E] text-sm font-semibold px-4 py-2.5 rounded-xl border border-[#0A2E6E]/20 hover:bg-[#0A2E6E]/5 transition">Login</Link>
+                  <Link href="/signup" onClick={() => setMobileOpen(false)} className="flex-1 text-center bg-[#0A2E6E] text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-[#1A6FEF] transition">Sign Up</Link>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </nav>
+
+      {/* Spacer for fixed navbar */}
+      <div className="h-24" />
+    </>
   );
 }
