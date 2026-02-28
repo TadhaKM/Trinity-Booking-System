@@ -4,7 +4,6 @@ import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuthStore } from '@/lib/auth-store';
-import { formatDate, formatPrice } from '@/lib/utils';
 
 interface FeaturedPost {
   id: string;
@@ -38,194 +37,167 @@ interface SocietyWithContent {
   upcomingEvent: UpcomingEvent | null;
 }
 
-const CATEGORIES = [
-  'All',
-  'Arts & Culture',
-  'Academic',
-  'Music',
-  'Sports & Fitness',
-  'Debate & Speaking',
-  'Social',
-];
+interface ActivityItem {
+  id: string;
+  type: 'booking' | 'viewing' | 'soldout' | 'newfollow';
+  message: string;
+  timestamp: string;
+}
 
+const CATEGORIES = ['All', 'Arts & Culture', 'Academic', 'Music', 'Sports & Fitness', 'Debate & Speaking', 'Social'];
 const CATEGORY_ICONS: Record<string, string> = {
-  'Arts & Culture': '🎨',
-  Academic: '📚',
-  Music: '🎵',
-  'Sports & Fitness': '⚽',
-  'Debate & Speaking': '🎤',
-  Social: '🌍',
+  'Arts & Culture': '🎨', Academic: '📚', Music: '🎵', 'Sports & Fitness': '⚽', 'Debate & Speaking': '🎤', Social: '🌍',
+};
+
+const ACTIVITY_ICONS: Record<string, { icon: string; color: string }> = {
+  booking: { icon: '🎫', color: 'bg-[#1A6FEF]/10 text-[#1A6FEF]' },
+  viewing: { icon: '👀', color: 'bg-[#F5A623]/10 text-[#F5A623]' },
+  soldout: { icon: '🔥', color: 'bg-red-50 text-red-500' },
+  newfollow: { icon: '💙', color: 'bg-[#59D4C8]/10 text-[#0A2E6E]' },
 };
 
 export default function SocietiesPage() {
   const user = useAuthStore((state) => state.user);
   const [societies, setSocieties] = useState<SocietyWithContent[]>([]);
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const fetchSocieties = async () => {
+    const fetchData = async () => {
       try {
-        const url = user ? `/api/societies?userId=${user.id}` : '/api/societies';
-        const res = await fetch(url);
-        const data = await res.json();
-        setSocieties(Array.isArray(data) ? data : []);
+        const [socRes, actRes] = await Promise.all([
+          fetch(user ? `/api/societies?userId=${user.id}` : '/api/societies'),
+          fetch('/api/activity/trending'),
+        ]);
+        const socData = await socRes.json();
+        const actData = await actRes.json();
+        setSocieties(Array.isArray(socData) ? socData : []);
+        setActivities(actData.activities || []);
       } catch (error) {
-        console.error('Error fetching societies:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchSocieties();
+    fetchData();
+    setTimeout(() => setMounted(true), 50);
   }, [user]);
 
   const filtered = useMemo(() => {
     return societies.filter((s) => {
       const matchesCategory = activeCategory === 'All' || s.category === activeCategory;
-      const matchesSearch =
-        search.trim() === '' ||
-        s.name.toLowerCase().includes(search.toLowerCase()) ||
-        s.description.toLowerCase().includes(search.toLowerCase());
+      const matchesSearch = search.trim() === '' || s.name.toLowerCase().includes(search.toLowerCase()) || s.description.toLowerCase().includes(search.toLowerCase());
       return matchesCategory && matchesSearch;
     });
   }, [societies, activeCategory, search]);
 
   const handleFollow = async (societyId: string) => {
     if (!user) return;
-    setSocieties((prev) =>
-      prev.map((s) =>
-        s.id === societyId
-          ? {
-              ...s,
-              isFollowing: !s.isFollowing,
-              followerCount: s.isFollowing ? s.followerCount - 1 : s.followerCount + 1,
-            }
-          : s
-      )
-    );
+    setSocieties((prev) => prev.map((s) => s.id === societyId ? { ...s, isFollowing: !s.isFollowing, followerCount: s.isFollowing ? s.followerCount - 1 : s.followerCount + 1 } : s));
     try {
-      await fetch(`/api/societies/${societyId}/follow`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id }),
-      });
+      await fetch(`/api/societies/${societyId}/follow`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) });
     } catch {
-      // Revert on failure
-      setSocieties((prev) =>
-        prev.map((s) =>
-          s.id === societyId
-            ? {
-                ...s,
-                isFollowing: !s.isFollowing,
-                followerCount: s.isFollowing ? s.followerCount - 1 : s.followerCount + 1,
-              }
-            : s
-        )
-      );
+      setSocieties((prev) => prev.map((s) => s.id === societyId ? { ...s, isFollowing: !s.isFollowing, followerCount: s.isFollowing ? s.followerCount - 1 : s.followerCount + 1 } : s));
     }
   };
 
   const handleLike = async (societyId: string, postId: string) => {
     if (!user) return;
-    setSocieties((prev) =>
-      prev.map((s) =>
-        s.id === societyId && s.featuredPost?.id === postId
-          ? {
-              ...s,
-              featuredPost: {
-                ...s.featuredPost!,
-                isLiked: !s.featuredPost!.isLiked,
-                likeCount: s.featuredPost!.isLiked
-                  ? s.featuredPost!.likeCount - 1
-                  : s.featuredPost!.likeCount + 1,
-              },
-            }
-          : s
-      )
-    );
+    setSocieties((prev) => prev.map((s) => s.id === societyId && s.featuredPost?.id === postId ? { ...s, featuredPost: { ...s.featuredPost!, isLiked: !s.featuredPost!.isLiked, likeCount: s.featuredPost!.isLiked ? s.featuredPost!.likeCount - 1 : s.featuredPost!.likeCount + 1 } } : s));
     try {
-      await fetch(`/api/societies/posts/${postId}/like`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id }),
-      });
+      await fetch(`/api/societies/posts/${postId}/like`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) });
     } catch {
-      // Revert on failure
-      setSocieties((prev) =>
-        prev.map((s) =>
-          s.id === societyId && s.featuredPost?.id === postId
-            ? {
-                ...s,
-                featuredPost: {
-                  ...s.featuredPost!,
-                  isLiked: !s.featuredPost!.isLiked,
-                  likeCount: s.featuredPost!.isLiked
-                    ? s.featuredPost!.likeCount - 1
-                    : s.featuredPost!.likeCount + 1,
-                },
-              }
-            : s
-        )
-      );
+      setSocieties((prev) => prev.map((s) => s.id === societyId && s.featuredPost?.id === postId ? { ...s, featuredPost: { ...s.featuredPost!, isLiked: !s.featuredPost!.isLiked, likeCount: s.featuredPost!.isLiked ? s.featuredPost!.likeCount - 1 : s.featuredPost!.likeCount + 1 } } : s));
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="w-12 h-12 rounded-full border-4 border-[#0E73B9]/20 border-t-[#0E73B9] animate-spin" />
+      <div className="flex items-center justify-center min-h-screen" data-testid="societies-loading">
+        <div className="relative">
+          <div className="w-16 h-16 rounded-full border-4 border-[#A8EDEA]/30 border-t-[#1A6FEF] animate-spin" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-[#0E73B9] text-white py-12 px-4">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl font-bold mb-1 text-white">TCD Societies</h1>
-          <p className="text-white/80 text-sm">
-            {societies.length} societies · Follow your favourites and stay up to date
-          </p>
+    <div className="min-h-screen bg-[#EFF2F7]" data-testid="societies-page">
+      {/* ─── HEADER ───────────────────────────────── */}
+      <div className="bg-[#0A2E6E] relative overflow-hidden" data-testid="societies-header">
+        <div className="absolute inset-0 noise-overlay" />
+        {/* Decorative elements */}
+        <div className="absolute top-8 right-12 w-48 h-48 border border-white/5 rounded-full" />
+        <div className="absolute bottom-4 left-8 w-24 h-24 border border-[#59D4C8]/10 rounded-2xl rotate-12" />
+        <div className="absolute top-1/2 right-1/4 w-2 h-2 bg-[#59D4C8] rounded-full opacity-30" />
+        <div className="absolute bottom-8 right-16 w-1.5 h-1.5 bg-[#F5A623] rounded-full opacity-40" />
 
-          {/* Search */}
-          <div className="mt-5 relative max-w-xl">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search societies..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-white/50"
-            />
+        <div className={`relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 transition-all duration-1000 ease-out ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-white/8 text-white/70 px-3 py-1.5 rounded-full text-xs font-bold tracking-wide uppercase mb-4 border border-white/10">
+                <svg className="w-3.5 h-3.5 text-[#59D4C8]" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" /></svg>
+                Community
+              </div>
+              <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight" data-testid="societies-title">
+                TCD Societies
+              </h1>
+              <p className="text-white/40 mt-2 text-lg">
+                {societies.length} societies &middot; Follow your favourites and stay up to date
+              </p>
+            </div>
+
+            {/* Search */}
+            <div className="w-full md:w-96">
+              <div className="relative">
+                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                <input
+                  type="text"
+                  placeholder="Search societies..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  data-testid="societies-search"
+                  className="w-full pl-12 pr-4 py-3.5 bg-white/8 border border-white/10 rounded-xl text-white placeholder-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-[#59D4C8]/30 focus:border-[#59D4C8]/30 transition-all duration-300"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Category pills */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto scrollbar-hide">
+      {/* ─── TRENDING TICKER ──────────────────────── */}
+      {activities.length > 0 && (
+        <div className="bg-[#0A2E6E] border-t border-white/5 overflow-hidden" data-testid="trending-ticker">
+          <div className="marquee-track animate-ticker py-3">
+            {[...activities, ...activities].map((item, i) => {
+              const style = ACTIVITY_ICONS[item.type] || { icon: '📢', color: 'bg-slate-100 text-slate-600' };
+              return (
+                <div key={`${item.id}-${i}`} className="inline-flex items-center gap-2.5 mx-6 flex-shrink-0" data-testid={`ticker-item-${i}`}>
+                  <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-sm ${style.color}`}>{style.icon}</span>
+                  <span className="text-white/60 text-sm font-medium whitespace-nowrap">{item.message}</span>
+                  <span className="w-1 h-1 bg-white/20 rounded-full" />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ─── CATEGORY PILLS ──────────────────────── */}
+      <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-xl border-b border-slate-200/50" data-testid="categories-filter">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex gap-2 overflow-x-auto hide-scrollbar">
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors border border-black ${
+              data-testid={`category-pill-${cat.toLowerCase().replace(/\s+/g, '-')}`}
+              className={`flex-shrink-0 px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
                 activeCategory === cat
-                  ? 'bg-[#0E73B9] text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-[#0A2E6E] text-white shadow-md shadow-[#0A2E6E]/15'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-[#0A2E6E]'
               }`}
             >
               {cat === 'All' ? 'All' : `${CATEGORY_ICONS[cat] ?? ''} ${cat}`}
@@ -234,23 +206,20 @@ export default function SocietiesPage() {
         </div>
       </div>
 
-      {/* Societies grid */}
-      <div className="max-w-xl mx-auto px-4 py-8">
+      {/* ─── SOCIETIES GRID ──────────────────────── */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {filtered.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">
-            <p className="text-lg font-medium">No societies found</p>
-            <p className="text-sm mt-1">Try a different search or category</p>
+          <div className="text-center py-20" data-testid="no-societies">
+            <div className="w-20 h-20 bg-[#0A2E6E]/5 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-10 h-10 text-[#0A2E6E]/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            </div>
+            <p className="text-xl font-bold text-[#0A2E6E]">No societies found</p>
+            <p className="text-slate-500 mt-1">Try a different search or category</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-6">
-            {filtered.map((society) => (
-              <SocietyCard
-                key={society.id}
-                society={society}
-                user={user}
-                onFollow={handleFollow}
-                onLike={handleLike}
-              />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="societies-grid">
+            {filtered.map((society, i) => (
+              <SocietyCard key={society.id} society={society} user={user} onFollow={handleFollow} onLike={handleLike} index={i} mounted={mounted} />
             ))}
           </div>
         )}
@@ -259,18 +228,13 @@ export default function SocietiesPage() {
   );
 }
 
-// ── Society Card ───────────────────────────────────────────────────────────────
-
-function SocietyCard({
-  society,
-  user,
-  onFollow,
-  onLike,
-}: {
+function SocietyCard({ society, user, onFollow, onLike, index, mounted }: {
   society: SocietyWithContent;
   user: any;
   onFollow: (id: string) => void;
   onLike: (societyId: string, postId: string) => void;
+  index: number;
+  mounted: boolean;
 }) {
   const [followLoading, setFollowLoading] = useState(false);
   const [likeLoading, setLikeLoading] = useState(false);
@@ -290,163 +254,83 @@ function SocietyCard({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border-2 border-black overflow-hidden flex flex-col hover:shadow-md transition-shadow">
-      {/* Society cover photo */}
-      <div className="relative h-36 w-full">
-        <Image
-          src={society.imageUrl}
-          alt={society.name}
-          fill
-          className="object-cover"
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-        {/* Category badge */}
-        <span className="absolute top-2 right-2 bg-black/40 text-white text-xs px-2 py-0.5 rounded-full backdrop-blur-sm">
+    <div
+      className={`group bg-white rounded-2xl border border-slate-200/80 overflow-hidden hover-lift transition-all duration-700 ease-out ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+      style={{ transitionDelay: `${100 + index * 60}ms` }}
+      data-testid={`society-card-${index}`}
+    >
+      {/* Cover Image */}
+      <div className="relative h-40 w-full overflow-hidden">
+        <Image src={society.imageUrl} alt={society.name} fill className="object-cover transition-transform duration-700 group-hover:scale-110" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
+        <div className="absolute inset-0 bg-[#0A2E6E]/30 group-hover:bg-[#0A2E6E]/20 transition-colors duration-500" />
+        <span className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-[#0A2E6E] text-xs font-bold px-2.5 py-1 rounded-full shadow-sm" data-testid={`society-category-${index}`}>
           {CATEGORY_ICONS[society.category] ?? ''} {society.category}
         </span>
       </div>
 
-      {/* Society name + follower row */}
-      <div className="px-4 pt-3 pb-2 flex items-start justify-between gap-2">
+      {/* Info Row */}
+      <div className="px-5 pt-4 pb-3 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="font-semibold text-gray-900 text-sm leading-tight truncate">
-            {society.name}
-          </h3>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <h3 className="font-bold text-[#0A2E6E] text-base leading-tight truncate" data-testid={`society-name-${index}`}>{society.name}</h3>
+          <p className="text-xs text-slate-500 mt-1">
             {society.followerCount.toLocaleString()} follower{society.followerCount !== 1 ? 's' : ''}
           </p>
         </div>
-        {/* Follow button */}
         {user ? (
-          <button
-            onClick={handleFollow}
-            disabled={followLoading}
-            className={`flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
-              society.isFollowing
-                ? 'border-gray-300 text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
-                : 'border-[#0E73B9] text-[#0E73B9] hover:bg-[#0E73B9] hover:text-white'
-            }`}
-          >
+          <button onClick={handleFollow} disabled={followLoading} data-testid={`society-follow-${index}`} className={`flex-shrink-0 text-xs font-bold px-4 py-2 rounded-full border-2 transition-all duration-300 ${society.isFollowing ? 'border-slate-200 text-slate-500 hover:border-red-200 hover:text-red-500 hover:bg-red-50' : 'border-[#0A2E6E] text-[#0A2E6E] hover:bg-[#0A2E6E] hover:text-white'}`}>
             {followLoading ? '...' : society.isFollowing ? 'Following' : 'Follow'}
           </button>
         ) : (
-          <Link
-            href="/login"
-            title="Sign in to follow"
-            className="flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-full border border-gray-200 text-gray-400 cursor-pointer hover:bg-gray-50"
-          >
-            Follow
-          </Link>
+          <Link href="/login" className="flex-shrink-0 text-xs font-bold px-4 py-2 rounded-full border-2 border-slate-200 text-slate-400 hover:border-slate-300 hover:bg-slate-50 transition-all duration-300">Follow</Link>
         )}
       </div>
 
-      {/* Promotional post OR upcoming event */}
+      {/* Content Area */}
       {society.featuredPost ? (
-        <div className="px-4 pb-3 flex-1 flex flex-col">
-          {/* Post image */}
-          <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-2">
-            <Image
-              src={society.featuredPost.imageUrl}
-              alt="Promotional post"
-              fill
-              className="object-cover"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            />
+        <div className="px-5 pb-4">
+          <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden mb-3">
+            <Image src={society.featuredPost.imageUrl} alt="Post" fill className="object-cover" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
           </div>
-          {/* Caption */}
-          <p className="text-xs text-gray-700 leading-relaxed line-clamp-2 mb-2">
-            {society.featuredPost.caption}
-          </p>
-          {/* Like row */}
+          <p className="text-sm text-slate-600 leading-relaxed line-clamp-2 mb-3">{society.featuredPost.caption}</p>
           <div className="flex items-center gap-1">
             {user ? (
-              <button
-                onClick={handleLike}
-                disabled={likeLoading}
-                className={`flex items-center gap-1 text-xs font-medium transition-colors ${
-                  society.featuredPost.isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'
-                }`}
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill={society.featuredPost.isLiked ? 'currentColor' : 'none'}
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                  />
-                </svg>
+              <button onClick={handleLike} disabled={likeLoading} data-testid={`society-like-${index}`} className={`flex items-center gap-1.5 text-sm font-semibold transition-all duration-300 px-3 py-1.5 rounded-full ${society.featuredPost.isLiked ? 'text-red-500 bg-red-50' : 'text-slate-400 hover:text-red-400 hover:bg-red-50'}`}>
+                <svg className="w-4 h-4" fill={society.featuredPost.isLiked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
                 {society.featuredPost.likeCount}
               </button>
             ) : (
-              <Link
-                href="/login"
-                title="Sign in to like"
-                className="flex items-center gap-1 text-xs text-gray-300 hover:text-gray-400"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                  />
-                </svg>
+              <Link href="/login" className="flex items-center gap-1.5 text-sm text-slate-300 hover:text-slate-400 px-3 py-1.5 rounded-full">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
                 {society.featuredPost.likeCount}
               </Link>
             )}
           </div>
         </div>
       ) : society.upcomingEvent ? (
-        /* No post — show upcoming event instead */
-        <div className="px-4 pb-3 flex-1">
-          <div className="bg-blue-50 rounded-xl p-3">
-            <p className="text-xs text-blue-500 font-medium mb-0.5 uppercase tracking-wide">
-              Upcoming Event
+        <div className="px-5 pb-4">
+          <div className="bg-[#0A2E6E]/5 rounded-xl p-4 border border-[#0A2E6E]/8">
+            <p className="text-xs text-[#1A6FEF] font-bold uppercase tracking-wider mb-1.5">Upcoming Event</p>
+            <p className="text-sm font-bold text-[#0A2E6E] leading-tight line-clamp-2">{society.upcomingEvent.title}</p>
+            <p className="text-xs text-slate-500 mt-1.5">
+              {new Date(society.upcomingEvent.startDate).toLocaleDateString('en-IE', { weekday: 'short', day: 'numeric', month: 'short' })} &middot; {society.upcomingEvent.location}
             </p>
-            <p className="text-sm font-semibold text-gray-800 leading-tight line-clamp-2">
-              {society.upcomingEvent.title}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              {new Date(society.upcomingEvent.startDate).toLocaleDateString('en-IE', {
-                weekday: 'short',
-                day: 'numeric',
-                month: 'short',
-              })}{' '}
-              · {society.upcomingEvent.location}
-            </p>
-            <p className="text-xs text-[#0E73B9] font-medium mt-1">
-              {society.upcomingEvent.lowestPrice === 0
-                ? 'Free'
-                : `From €${society.upcomingEvent.lowestPrice.toFixed(2)}`}
-              {' · '}
-              {society.upcomingEvent.ticketsLeft} left
-            </p>
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-xs font-bold text-[#0A2E6E]">{society.upcomingEvent.lowestPrice === 0 ? 'Free' : `From €${society.upcomingEvent.lowestPrice.toFixed(2)}`}</span>
+              <span className="text-xs text-slate-400">&middot;</span>
+              <span className="text-xs text-[#F5A623] font-semibold">{society.upcomingEvent.ticketsLeft} left</span>
+            </div>
           </div>
         </div>
       ) : (
-        <div className="px-4 pb-3 flex-1">
-          <p className="text-xs text-gray-400 italic">No upcoming events</p>
+        <div className="px-5 pb-4">
+          <p className="text-sm text-slate-400 italic">No upcoming events</p>
         </div>
       )}
 
-      {/* Footer — View Society */}
-      <div className="px-4 pb-4 mt-auto">
-        <Link
-          href={`/societies/${society.id}`}
-          className="block text-center text-xs font-medium text-[#0E73B9] hover:text-[#0a5a94] py-2 border border-[#0E73B9]/30 rounded-xl hover:bg-blue-50 transition-colors"
-        >
-          View Society →
+      {/* Footer */}
+      <div className="px-5 pb-5 mt-auto">
+        <Link href={`/societies/${society.id}`} data-testid={`society-view-${index}`} className="block text-center text-sm font-bold text-[#0A2E6E] py-2.5 border-2 border-[#0A2E6E]/15 rounded-xl hover:bg-[#0A2E6E] hover:text-white hover:border-[#0A2E6E] transition-all duration-300">
+          View Society
         </Link>
       </div>
     </div>
