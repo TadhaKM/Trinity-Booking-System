@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -24,6 +24,7 @@
 
 html {
   color-scheme: light;
+  scroll-behavior: smooth;
 }
 
 body {
@@ -31,6 +32,7 @@ body {
   background: var(--bg-main);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -43,7 +45,37 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
-/* Gradient card backgrounds */
+/* ═══════════════ GLASSMORPHISM ═══════════════ */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-dark {
+  background: rgba(10, 46, 110, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ═══════════════ GRADIENT TEXT ═══════════════ */
+.text-gradient-brand {
+  background: linear-gradient(135deg, #0A2E6E 0%, #1A6FEF 50%, #59D4C8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-mint {
+  background: linear-gradient(135deg, #A8EDEA, #59D4C8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ═══════════════ CARD GRADIENTS ═══════════════ */
 .card-gradient-mint {
   background: linear-gradient(145deg, #A8EDEA 0%, #59D4C8 100%);
 }
@@ -63,52 +95,146 @@ h1, h2, h3, h4, h5, h6 {
   background: linear-gradient(145deg, #FECFEF 0%, #FF9A9E 100%);
 }
 
-/* Stacked card shadows */
-.card-stack {
-  position: relative;
-}
-.card-stack::before,
-.card-stack::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 1.25rem;
-  z-index: -1;
-}
-.card-stack::before {
-  transform: rotate(-3deg) translateY(6px);
-  background: #F5A623;
-  opacity: 0.5;
-}
-.card-stack::after {
-  transform: rotate(-6deg) translateY(12px);
-  background: #C9B8E8;
-  opacity: 0.35;
-}
-
-/* Smooth hover lift */
+/* ═══════════════ HOVER LIFT ═══════════════ */
 .hover-lift {
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease;
 }
 .hover-lift:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  transform: translateY(-8px);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.12);
 }
 
-/* Badge pulse for "tickets left" */
+/* ═══════════════ BADGE PULSE ═══════════════ */
 @keyframes badge-pulse {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  50% { transform: scale(1.08); }
 }
 .badge-pulse {
   animation: badge-pulse 2s ease-in-out infinite;
 }
 
-/* Pill button style */
+/* ═══════════════ PILL BUTTON ═══════════════ */
 .btn-pill {
-  @apply px-6 py-3 rounded-full font-semibold transition-all duration-200;
+  @apply px-7 py-3.5 rounded-full font-semibold transition-all duration-300 relative overflow-hidden;
+}
+.btn-pill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.2) 50%, transparent 70%);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+.btn-pill:hover::after {
+  transform: translateX(100%);
 }
 .btn-pill:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* ═══════════════ STAGGERED ANIMATIONS ═══════════════ */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+.stagger-6 { animation-delay: 0.6s; }
+
+/* ═══════════════ SCROLL REVEAL ═══════════════ */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ═══════════════ CARD SHINE EFFECT ═══════════════ */
+.card-shine {
+  position: relative;
+  overflow: hidden;
+}
+.card-shine::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    to bottom right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0) 60%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: rotate(30deg);
+  transition: transform 0.8s ease;
+  z-index: 1;
+  pointer-events: none;
+}
+.card-shine:hover::before {
+  transform: rotate(30deg) translateY(-30%);
+}
+
+/* ═══════════════ NOISE TEXTURE OVERLAY ═══════════════ */
+.noise-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ═══════════════ CATEGORY CARD HOVER ═══════════════ */
+.category-card {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.category-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.2);
+}
+
+/* ═══════════════ FLOATING NAV SHADOW ═══════════════ */
+.nav-glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.12), 0 1px 0 0 rgba(255, 255, 255, 0.4) inset;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* ═══════════════ MARQUEE ═══════════════ */
+.marquee-track {
+  display: flex;
+  width: max-content;
+}
+
+/* ═══════════════ SCROLLBAR HIDE ═══════════════ */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ═══════════════ GRADIENT BG SHIFT ═══════════════ */
+.gradient-bg-animated {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+/* ═══════════════ GLOW RING ═══════════════ */
+.glow-ring {
+  box-shadow: 0 0 0 0 rgba(89, 212, 200, 0.4);
+  transition: box-shadow 0.3s ease;
+}
+.glow-ring:hover {
+  box-shadow: 0 0 0 6px rgba(89, 212, 200, 0.15), 0 0 20px rgba(89, 212, 200, 0.2);
 }
