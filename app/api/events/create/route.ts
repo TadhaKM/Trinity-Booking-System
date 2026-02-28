@@ -1,9 +1,28 @@
+/**
+ * POST /api/events/create
+ *
+ * Security hardening applied:
+ *  - Zod schema validation (CreateEventSchema) — OWASP A03
+ *  - Strict field limits & type coercion — OWASP A03
+ *  - No internal error details leaked to caller — OWASP A05
+ *  - Organiser permission verified server-side — OWASP A01
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { CreateEventSchema, zodErrors } from '@/lib/validation';
 
 export async function POST(request: NextRequest) {
   try {
-    const data = await request.json();
+    // ── 1. Parse & validate input ─────────────────────────────────────────────
+    const body = await request.json();
+    const parsed = CreateEventSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: zodErrors(parsed) },
+        { status: 400 }
+      );
+    }
 
     const {
       title,
@@ -17,114 +36,9 @@ export async function POST(request: NextRequest) {
       tags,
       ticketTypes,
       organiserId,
-    } = data;
+    } = parsed.data;
 
-    // Validate required fields
-    if (!title || !title.trim()) {
-      return NextResponse.json(
-        { error: 'Event title is required' },
-        { status: 400 }
-      );
-    }
-
-    if (!description || !description.trim()) {
-      return NextResponse.json(
-        { error: 'Event description is required' },
-        { status: 400 }
-      );
-    }
-
-    if (!societyId) {
-      return NextResponse.json(
-        { error: 'Please select a society for this event' },
-        { status: 400 }
-      );
-    }
-
-    if (!startDate) {
-      return NextResponse.json(
-        { error: 'Start date is required' },
-        { status: 400 }
-      );
-    }
-
-    if (!location || !location.trim()) {
-      return NextResponse.json(
-        { error: 'Event location is required' },
-        { status: 400 }
-      );
-    }
-
-    if (!ticketTypes || ticketTypes.length === 0) {
-      return NextResponse.json(
-        { error: 'At least one ticket type is required' },
-        { status: 400 }
-      );
-    }
-
-    if (!organiserId) {
-      return NextResponse.json(
-        { error: 'Organiser ID is required. Please log in again.' },
-        { status: 400 }
-      );
-    }
-
-    // Validate ticket types
-    for (let i = 0; i < ticketTypes.length; i++) {
-      const tt = ticketTypes[i];
-      if (!tt.name || !tt.name.trim()) {
-        return NextResponse.json(
-          { error: `Ticket type ${i + 1}: Name is required` },
-          { status: 400 }
-        );
-      }
-      if (tt.quantity <= 0) {
-        return NextResponse.json(
-          { error: `Ticket type "${tt.name}": Quantity must be at least 1` },
-          { status: 400 }
-        );
-      }
-      if (tt.price < 0) {
-        return NextResponse.json(
-          { error: `Ticket type "${tt.name}": Price cannot be negative` },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Get society - if societyId matches an existing society, use it.
-    // Otherwise, treat it as a custom society name and create a new one.
-    let society = await prisma.society.findUnique({
-      where: { id: societyId },
-    });
-
-    let resolvedSocietyId = societyId;
-
-    if (!society) {
-      // Try to find by name (case-insensitive)
-      const existingByName = await prisma.society.findFirst({
-        where: { name: { equals: societyId } },
-      });
-
-      if (existingByName) {
-        society = existingByName;
-        resolvedSocietyId = existingByName.id;
-      } else {
-        // Create a new society with the custom name
-        society = await prisma.society.create({
-          data: {
-            name: societyId.trim(),
-            description: `Society created by organiser`,
-            category: category || 'Other',
-            imageUrl: 'https://images.unsplash.com/photo-1523050854058-8df90110c8f1?w=800',
-            location: '{}',
-          },
-        });
-        resolvedSocietyId = society.id;
-      }
-    }
-
-    // Verify organiser exists
+    // ── 2. Verify organiser ───────────────────────────────────────────────────
     const organiser = await prisma.user.findUnique({
       where: { id: organiserId },
     });
@@ -136,15 +50,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!organiser.isOrganiser) {
+    if (!organiser.isOrganiser && !organiser.isAdmin) {
       return NextResponse.json(
-        { error: 'You do not have permission to create events. Please contact support.' },
+        { error: 'You do not have permission to create events.' },
         { status: 403 }
       );
     }
 
-    // Ensure tags is a JSON string
-    const tagsJson = Array.isArray(tags) ? JSON.stringify(tags) : (tags || '[]');
+    // ── 3. Resolve society ────────────────────────────────────────────────────
+    // If societyId matches an existing society ID, use it.
+    // Otherwise treat it as a name — find by name or create a new society.
+    let society = await prisma.society.findUnique({
+      where: { id: societyId },
+    });
+
+    let resolvedSocietyId = societyId;
+
+    if (!society) {
+      const existingByName = await prisma.society.findFirst({
+        where: { name: { equals: societyId } },
+      });
+
+      if (existingByName) {
+        society = existingByName;
+        resolvedSocietyId = existingByName.id;
+      } else {
+        society = await prisma.society.create({
+          data: {
+            name: societyId.trim(),
+            description: 'Society created by organiser',
+            category: category || 'Other',
+            imageUrl: 'https://images.unsplash.com/photo-1523050854058-8df90110c8f1?w=800',
+            location: '{}',
+          },
+        });
+        resolvedSocietyId = society.id;
+      }
+    }
+
+    // ── 4. Create event ───────────────────────────────────────────────────────
+    const tagsJson = Array.isArray(tags) ? JSON.stringify(tags) : '[]';
 
     const event = await prisma.event.create({
       data: {
@@ -160,11 +105,11 @@ export async function POST(request: NextRequest) {
         tags: tagsJson,
         organiserId,
         ticketTypes: {
-          create: ticketTypes.map((tt: any) => ({
+          create: ticketTypes.map((tt) => ({
             name: tt.name.trim(),
-            price: parseFloat(tt.price) || 0,
-            quantity: parseInt(tt.quantity) || 1,
-            available: parseInt(tt.quantity) || 1,
+            price: tt.price,
+            quantity: tt.quantity,
+            available: tt.quantity,
           })),
         },
       },
@@ -178,7 +123,6 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Error creating event:', error);
 
-    // Handle specific Prisma errors
     if (error.code === 'P2002') {
       return NextResponse.json(
         { error: 'An event with this information already exists.' },
@@ -188,15 +132,13 @@ export async function POST(request: NextRequest) {
 
     if (error.code === 'P2003') {
       return NextResponse.json(
-        { error: 'Invalid reference: The society or organiser does not exist.' },
+        { error: 'Invalid reference: the society or organiser does not exist.' },
         { status: 400 }
       );
     }
 
-    // Return the actual error message for debugging
-    const errorMessage = error.message || 'Unknown error';
     return NextResponse.json(
-      { error: `Failed to create event: ${errorMessage}` },
+      { error: 'Failed to create event. Please try again.' },
       { status: 500 }
     );
   }

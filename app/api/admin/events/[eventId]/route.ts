@@ -1,5 +1,14 @@
+/**
+ * DELETE /api/admin/events/[eventId]
+ *
+ * Security hardening applied:
+ *  - Zod schema validation — enforces adminId length limit — OWASP A03
+ *  - Admin identity verified server-side via DB — OWASP A01
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { AdminOrderDeleteSchema, zodErrors } from '@/lib/validation';
 
 export async function DELETE(
   request: NextRequest,
@@ -7,14 +16,21 @@ export async function DELETE(
 ) {
   try {
     const { eventId } = await params;
-    const { adminId } = await request.json();
 
-    const admin = await prisma.user.findUnique({ where: { id: adminId } });
+    // ── 1. Validate body ──────────────────────────────────────────────────────
+    const body = await request.json();
+    const parsed = AdminOrderDeleteSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: zodErrors(parsed) }, { status: 400 });
+    }
+
+    // ── 2. Verify admin ───────────────────────────────────────────────────────
+    const admin = await prisma.user.findUnique({ where: { id: parsed.data.adminId } });
     if (!admin?.isAdmin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    // Delete related records first (tickets -> orders -> ticketTypes -> event)
+    // ── 3. Delete event cascade (tickets → orders → ticketTypes → event) ──────
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       include: {
@@ -27,15 +43,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 
-    // Delete all tickets for this event's orders
     for (const order of event.orders) {
       await prisma.ticket.deleteMany({ where: { orderId: order.id } });
     }
 
-    // Delete all orders for this event
     await prisma.order.deleteMany({ where: { eventId } });
-
-    // Delete ticket types and event (cascade should handle this but being explicit)
     await prisma.ticketType.deleteMany({ where: { eventId } });
     await prisma.event.delete({ where: { id: eventId } });
 

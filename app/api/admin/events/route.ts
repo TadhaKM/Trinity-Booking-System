@@ -1,15 +1,31 @@
+/**
+ * POST /api/admin/events
+ *
+ * Security hardening applied:
+ *  - Zod schema validation — enforces adminId length limit — OWASP A03
+ *  - Admin identity verified server-side via DB — OWASP A01
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { AdminOrderDeleteSchema, zodErrors } from '@/lib/validation';
 
 export async function POST(request: NextRequest) {
   try {
-    const { adminId } = await request.json();
+    // ── 1. Validate body ──────────────────────────────────────────────────────
+    const body = await request.json();
+    const parsed = AdminOrderDeleteSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: zodErrors(parsed) }, { status: 400 });
+    }
 
-    const admin = await prisma.user.findUnique({ where: { id: adminId } });
+    // ── 2. Verify admin ───────────────────────────────────────────────────────
+    const admin = await prisma.user.findUnique({ where: { id: parsed.data.adminId } });
     if (!admin?.isAdmin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
+    // ── 3. Fetch all events ───────────────────────────────────────────────────
     const events = await prisma.event.findMany({
       include: {
         society: { select: { name: true } },

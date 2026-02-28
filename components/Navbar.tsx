@@ -20,6 +20,7 @@ export default function Navbar() {
     { href: '/campus-world', label: 'Campus World' },
     { href: '/search', label: 'Search' },
     { href: '/calendar', label: 'Calendar' },
+    { href: '/societies', label: 'Societies' },
   ];
 
   if (user) {
@@ -118,7 +119,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       <div className="md:hidden border-t border-white/20 px-4 py-3 bg-[#0E73B9]">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-nowrap gap-2 overflow-x-auto scrollbar-hide">
           {navItems.map((item) => (
             <Link
               key={item.href}

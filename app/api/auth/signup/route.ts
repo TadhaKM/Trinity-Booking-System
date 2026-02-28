@@ -1,77 +1,41 @@
+/**
+ * POST /api/auth/signup
+ *
+ * Security hardening applied:
+ *  - IP-based rate limiting (10 attempts per 15 min) — OWASP A07
+ *  - Zod input validation (replaces manual checks) — OWASP A03
+ *  - bcrypt password hashing (cost factor 12) — OWASP A02
+ *  - Generic 500 errors (no internal details leaked) — OWASP A05
+ *  - Password never returned in response — OWASP A02
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/db';
+import { rateLimit, getClientIp, rateLimitResponse, LIMITS } from '@/lib/rate-limit';
+import { SignupSchema, zodErrors } from '@/lib/validation';
 
 export async function POST(request: NextRequest) {
+  // ── 1. Rate limiting (per IP) ───────────────────────────────────────────────
+  const ip = getClientIp(request);
+  const rl = rateLimit('auth:signup', ip, LIMITS.AUTH.limit, LIMITS.AUTH.windowMs);
+  if (!rl.success) return rateLimitResponse(rl.retryAfterMs);
+
   try {
-    const { name, email, password, confirmPassword, role } = await request.json();
-
-    // Validate required fields
-    if (!name || !email || !password || !confirmPassword) {
+    // ── 2. Parse & validate input ─────────────────────────────────────────────
+    const body = await request.json();
+    const parsed = SignupSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'All fields are required.' },
+        { error: zodErrors(parsed) },
         { status: 400 }
       );
     }
 
-    // Validate name length
-    if (name.trim().length < 2) {
-      return NextResponse.json(
-        { error: 'Name must be at least 2 characters.' },
-        { status: 400 }
-      );
-    }
+    const { name, email, password, role } = parsed.data;
+    const normalizedEmail = email; // Zod already trims + lowercases via the email primitive
 
-    if (name.trim().length > 100) {
-      return NextResponse.json(
-        { error: 'Name must be less than 100 characters.' },
-        { status: 400 }
-      );
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const normalizedEmail = email.trim().toLowerCase();
-
-    if (!emailRegex.test(normalizedEmail)) {
-      return NextResponse.json(
-        { error: 'Please enter a valid email address.' },
-        { status: 400 }
-      );
-    }
-
-    if (normalizedEmail.length > 255) {
-      return NextResponse.json(
-        { error: 'Email is too long.' },
-        { status: 400 }
-      );
-    }
-
-    // Validate password
-    if (password.length < 8) {
-      return NextResponse.json(
-        { error: 'Password must be at least 8 characters.' },
-        { status: 400 }
-      );
-    }
-
-    if (password.length > 128) {
-      return NextResponse.json(
-        { error: 'Password must be less than 128 characters.' },
-        { status: 400 }
-      );
-    }
-
-    if (password !== confirmPassword) {
-      return NextResponse.json(
-        { error: 'Passwords do not match.' },
-        { status: 400 }
-      );
-    }
-
-    // Validate role
-    const isOrganiser = role === 'organiser';
-
-    // Check if email already exists
+    // ── 3. Check for duplicate email ──────────────────────────────────────────
     const existingUser = await prisma.user.findUnique({
       where: { email: normalizedEmail },
     });
@@ -83,17 +47,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create user
+    // ── 4. Hash password before storing — OWASP A02 ───────────────────────────
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    const isOrganiser = role === 'organiser';
+
+    // ── 5. Create user ────────────────────────────────────────────────────────
     const user = await prisma.user.create({
       data: {
         name: name.trim(),
         email: normalizedEmail,
-        password,
+        password: hashedPassword,
         isOrganiser,
       },
     });
 
-    // Return user data (without password)
+    // ── 6. Return safe payload (password excluded) ────────────────────────────
     return NextResponse.json({
       id: user.id,
       email: user.email,
@@ -103,9 +72,9 @@ export async function POST(request: NextRequest) {
       profilePicture: null,
     });
   } catch (error: any) {
-    console.error('Signup error:', error?.message || error);
-    console.error('Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    console.error('Signup error:', error);
 
+    // Prisma unique constraint — race condition between check and insert
     if (error.code === 'P2002') {
       return NextResponse.json(
         { error: 'An account with this email already exists.' },
@@ -114,7 +83,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: 'Something went wrong. Please try again.', details: error?.message || String(error) },
+      { error: 'Something went wrong. Please try again.' },
       { status: 500 }
     );
   }

@@ -24,6 +24,7 @@ model User {
 
   orders    Order[]
   following SocietyFollower[]
+  postLikes PostLike[]
 }
 
 model Society {
@@ -38,6 +39,7 @@ model Society {
 
   events    Event[]
   followers SocietyFollower[]
+  posts     SocietyPost[]
 }
 
 model SocietyFollower {
@@ -68,9 +70,10 @@ model Event {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  society     Society      @relation(fields: [societyId], references: [id], onDelete: Cascade)
-  ticketTypes TicketType[]
-  orders      Order[]
+  society      Society       @relation(fields: [societyId], references: [id], onDelete: Cascade)
+  ticketTypes  TicketType[]
+  orders       Order[]
+  societyPosts SocietyPost[]
 }
 
 model TicketType {
@@ -120,4 +123,31 @@ model Ticket {
 
   order      Order      @relation(fields: [orderId], references: [id])
   ticketType TicketType @relation(fields: [ticketTypeId], references: [id])
+}
+
+model SocietyPost {
+  id        String   @id @default(cuid())
+  societyId String
+  eventId   String?
+  imageUrl  String   // base64 data URI or URL
+  caption   String
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  society Society    @relation(fields: [societyId], references: [id], onDelete: Cascade)
+  event   Event?     @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  likes   PostLike[]
+}
+
+model PostLike {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post SocietyPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
 }

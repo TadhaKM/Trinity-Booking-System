@@ -7,11 +7,31 @@ export async function GET(
 ) {
   try {
     const { organiserId } = await params;
-    // For this demo, return all societies
-    // In a real app, you'd filter by organiser permissions
-    const societies = await prisma.society.findMany({
-      orderBy: { name: 'asc' },
+
+    // Check if admin — admins get all societies
+    const user = await prisma.user.findUnique({ where: { id: organiserId } });
+    if (user?.isAdmin) {
+      const societies = await prisma.society.findMany({
+        select: { id: true, name: true },
+        orderBy: { name: 'asc' },
+      });
+      return NextResponse.json(societies);
+    }
+
+    // Organiser: return only societies where they have created events
+    const events = await prisma.event.findMany({
+      where: { organiserId },
+      select: { societyId: true },
+      distinct: ['societyId'],
     });
+    const societyIds = events.map((e) => e.societyId);
+    const societies = societyIds.length > 0
+      ? await prisma.society.findMany({
+          where: { id: { in: societyIds } },
+          select: { id: true, name: true },
+          orderBy: { name: 'asc' },
+        })
+      : [];
 
     return NextResponse.json(societies);
   } catch (error) {

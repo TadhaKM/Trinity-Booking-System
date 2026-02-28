@@ -1,5 +1,15 @@
+/**
+ * DELETE /api/admin/orders/[orderId]  — cancel & delete an order
+ * PATCH  /api/admin/orders/[orderId]  — update order status
+ *
+ * Security hardening applied:
+ *  - Zod schema validation — enforces status enum, ID length limits — OWASP A03
+ *  - Admin identity verified server-side via DB — OWASP A01
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { AdminOrderDeleteSchema, AdminOrderPatchSchema, zodErrors } from '@/lib/validation';
 
 export async function DELETE(
   request: NextRequest,
@@ -7,13 +17,21 @@ export async function DELETE(
 ) {
   try {
     const { orderId } = await params;
-    const { adminId } = await request.json();
 
-    const admin = await prisma.user.findUnique({ where: { id: adminId } });
+    // ── 1. Validate body ──────────────────────────────────────────────────────
+    const body = await request.json();
+    const parsed = AdminOrderDeleteSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: zodErrors(parsed) }, { status: 400 });
+    }
+
+    // ── 2. Verify admin ───────────────────────────────────────────────────────
+    const admin = await prisma.user.findUnique({ where: { id: parsed.data.adminId } });
     if (!admin?.isAdmin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
+    // ── 3. Delete order & restore availability ────────────────────────────────
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: { tickets: true },
@@ -23,7 +41,6 @@ export async function DELETE(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    // Restore ticket availability
     for (const ticket of order.tickets) {
       await prisma.ticketType.update({
         where: { id: ticket.ticketTypeId },
@@ -31,7 +48,6 @@ export async function DELETE(
       });
     }
 
-    // Delete tickets then order
     await prisma.ticket.deleteMany({ where: { orderId } });
     await prisma.order.delete({ where: { id: orderId } });
 
@@ -48,13 +64,23 @@ export async function PATCH(
 ) {
   try {
     const { orderId } = await params;
-    const { adminId, status } = await request.json();
 
+    // ── 1. Validate body — enforces status enum via Zod ───────────────────────
+    const body = await request.json();
+    const parsed = AdminOrderPatchSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: zodErrors(parsed) }, { status: 400 });
+    }
+
+    const { adminId, status } = parsed.data;
+
+    // ── 2. Verify admin ───────────────────────────────────────────────────────
     const admin = await prisma.user.findUnique({ where: { id: adminId } });
     if (!admin?.isAdmin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
+    // ── 3. Update order status ────────────────────────────────────────────────
     const updated = await prisma.order.update({
       where: { id: orderId },
       data: { status },
