@@ -3,11 +3,19 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useAuthStore } from '@/lib/auth-store';
 import { Event } from '@/lib/types';
 import { formatDate, formatPrice, calculateFees, applyCoupon } from '@/lib/utils';
 
-type ModalView = 'details' | 'tickets' | 'auth' | 'guest-form' | 'checkout' | 'confirmation';
+type ModalView = 'details' | 'tickets' | 'auth' | 'guest-form' | 'checkout' | 'payment' | 'confirmation';
+
+const _stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const stripePromise =
+  _stripeKey && _stripeKey !== 'YOUR_STRIPE_PUBLISHABLE_KEY'
+    ? loadStripe(_stripeKey).catch(() => null)
+    : null;
 
 interface GuestInfo {
   name: string;
@@ -33,6 +41,9 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
   const [couponError, setCouponError] = useState('');
   const [bookingLoading, setBookingLoading] = useState(false);
   const [confirmationData, setConfirmationData] = useState<any>(null);
+  const [clientSecret, setClientSecret] = useState('');
+  const [stripeConfigured, setStripeConfigured] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
 
   // Reset state when modal opens or event changes
   useEffect(() => {
@@ -99,6 +110,37 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
       }
     } catch {
       setCouponError('Failed to validate coupon');
+    }
+  };
+
+  // Create Stripe PaymentIntent and advance to payment view
+  const handleGoToPayment = async () => {
+    if (total === 0) {
+      // Free tickets — skip Stripe, complete directly
+      await handleCompleteBooking();
+      return;
+    }
+    setBookingLoading(true);
+    setPaymentError('');
+    try {
+      const res = await fetch('/api/payments/create-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: Math.round(total * 100), // euros → cents
+          currency: 'eur',
+          metadata: { eventId: event.id },
+          organiserId: event.organiserId,
+        }),
+      });
+      const data = await res.json();
+      setClientSecret(data.clientSecret);
+      setStripeConfigured(data.configured ?? false);
+      setModalView('payment');
+    } catch {
+      setPaymentError('Failed to initialise payment. Please try again.');
+    } finally {
+      setBookingLoading(false);
     }
   };
 
@@ -175,6 +217,7 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
             {modalView === 'auth' && 'Continue Booking'}
             {modalView === 'guest-form' && 'Guest Details'}
             {modalView === 'checkout' && 'Checkout'}
+            {modalView === 'payment' && 'Payment'}
             {modalView === 'confirmation' && 'Booking Confirmed!'}
           </h2>
           <button onClick={onClose} className="text-black p-1">
@@ -195,6 +238,7 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
                     alt={event.title}
                     fill
                     className="object-cover"
+                    sizes="(max-width: 512px) 100vw, 512px"
                   />
                   <div className="absolute top-3 right-3 bg-white text-black px-3 py-1 rounded-full text-sm font-semibold">
                     {event.category}
@@ -525,13 +569,49 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
                   Back
                 </button>
                 <button
-                  onClick={handleCompleteBooking}
+                  onClick={handleGoToPayment}
                   disabled={bookingLoading}
-                  className="flex-1 bg-[#0d3b66] text-white py-3 rounded-lg font-bold hover:bg-[#0a2f52] transition disabled:bg-[#7a9fc0]"
+                  className="flex-1 bg-[#0569b9] text-white py-3 rounded-lg font-bold hover:bg-[#0A2E6E] transition disabled:bg-[#7a9fc0]"
                 >
-                  {bookingLoading ? 'Processing...' : 'Complete Booking'}
+                  {bookingLoading ? 'Processing...' : total === 0 ? 'Complete Booking' : 'Proceed to Payment'}
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* VIEW: Payment (Stripe) */}
+          {modalView === 'payment' && (
+            <div>
+              <div className="bg-[#EFF2F7] rounded-xl p-4 mb-5">
+                <p className="font-bold text-[#0A2E6E] text-sm">{event.title}</p>
+                <p className="text-xs text-slate-500 mt-0.5">{formatDate(event.startDate)}</p>
+                <p className="font-black text-[#0569b9] text-lg mt-1">{formatPrice(total)}</p>
+              </div>
+
+              {stripeConfigured && stripePromise && clientSecret ? (
+                <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe', variables: { colorPrimary: '#0569b9' } } }}>
+                  <StripePaymentForm
+                    total={total}
+                    onSuccess={handleCompleteBooking}
+                    onBack={() => setModalView('checkout')}
+                  />
+                </Elements>
+              ) : (
+                /* Stripe not configured — show placeholder */
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center">
+                    <div className="text-3xl mb-2">💳</div>
+                    <p className="font-bold text-[#0A2E6E] mb-1">Payment Gateway</p>
+                    <p className="text-sm text-slate-500">Add <code className="bg-slate-100 px-1 rounded">STRIPE_SECRET_KEY</code> and <code className="bg-slate-100 px-1 rounded">NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code> to enable Card, Apple Pay &amp; Google Pay.</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <button onClick={() => setModalView('checkout')} className="flex-1 border border-[#0569b9] text-[#0569b9] py-3 rounded-xl font-semibold hover:bg-[#0569b9]/5 transition">Back</button>
+                    <button onClick={handleCompleteBooking} disabled={bookingLoading} className="flex-1 bg-[#0569b9] text-white py-3 rounded-xl font-bold hover:bg-[#0A2E6E] transition disabled:opacity-50">
+                      {bookingLoading ? 'Processing...' : 'Complete (No Payment)'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -580,6 +660,107 @@ export default function BookingModal({ event, isOpen, onClose, closeLabel }: Boo
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ─── Stripe Payment Form ─────────────────────────────────────────────────── */
+function StripePaymentForm({
+  total,
+  onSuccess,
+  onBack,
+}: {
+  total: number;
+  onSuccess: () => Promise<void>;
+  onBack: () => void;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [loading, setLoading] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [error, setError] = useState('');
+
+  // If Stripe hasn't initialised within 10s, show an error
+  useEffect(() => {
+    if (ready) return;
+    const timer = setTimeout(() => {
+      if (!ready) setError('Payment form failed to load. Please refresh and try again.');
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [ready]);
+
+  const handlePay = async () => {
+    if (!stripe || !elements) return;
+    setLoading(true);
+    setError('');
+    try {
+      const { error: stripeError, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        redirect: 'if_required',
+        confirmParams: {
+          return_url: `${window.location.origin}/tickets`,
+        },
+      });
+      if (stripeError) {
+        setError(stripeError.message ?? 'Payment failed. Please try again.');
+      } else if (paymentIntent?.status === 'succeeded') {
+        await onSuccess();
+      }
+    } catch {
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Loading skeleton shown until Stripe iframe is ready */}
+      {!ready && (
+        <div className="space-y-3 animate-pulse">
+          <div className="h-12 bg-slate-100 rounded-xl" />
+          <div className="h-12 bg-slate-100 rounded-xl" />
+        </div>
+      )}
+      <div className={ready ? '' : 'invisible h-0 overflow-hidden'}>
+        <PaymentElement
+          options={{ layout: 'tabs' }}
+          onReady={() => setReady(true)}
+        />
+      </div>
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm">
+          {error}
+        </div>
+      )}
+      <div className="flex gap-3 pt-2">
+        <button
+          type="button"
+          onClick={onBack}
+          disabled={loading}
+          className="flex-1 border border-[#0569b9] text-[#0569b9] py-3 rounded-xl font-semibold hover:bg-[#0569b9]/5 transition disabled:opacity-50"
+        >
+          Back
+        </button>
+        <button
+          type="button"
+          onClick={handlePay}
+          disabled={loading || !ready}
+          className="flex-1 bg-[#0569b9] text-white py-3 rounded-xl font-bold hover:bg-[#0A2E6E] transition disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          {loading ? (
+            <><svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Processing…</>
+          ) : !ready ? (
+            'Loading…'
+          ) : (
+            `Pay ${new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(total)}`
+          )}
+        </button>
+      </div>
+      <p className="text-center text-xs text-slate-400 flex items-center justify-center gap-1.5">
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+        Secured by Stripe · Apple Pay &amp; Google Pay supported
+      </p>
     </div>
   );
 }

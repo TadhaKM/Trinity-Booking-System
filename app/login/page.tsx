@@ -43,9 +43,7 @@ function LoginContent() {
 
   const handleGoogleLogin = () => {
     setGoogleLoading(true);
-    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-    const redirectUrl = window.location.origin + '/auth/callback';
-    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+    window.location.href = '/api/auth/google';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,15 +97,11 @@ function LoginContent() {
   return (
     <div className="min-h-screen bg-[#EFF2F7] flex" data-testid="login-page">
       {/* Left Panel - Solid navy with texture */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-[#0A2E6E] items-center justify-center p-12">
+      <div className="hidden lg:flex lg:w-[38%] relative overflow-hidden bg-[#0A2E6E] items-center justify-center p-12">
         {/* Subtle grain texture */}
         <div className="absolute inset-0 noise-overlay" />
         {/* Accent shapes — solid, no gradients */}
-        <div className="absolute top-16 right-16 w-64 h-64 border border-white/8 rounded-full" />
-        <div className="absolute top-20 right-20 w-56 h-56 border border-white/5 rounded-full" />
         <div className="absolute bottom-16 left-16 w-40 h-40 border border-[#59D4C8]/15 rounded-3xl rotate-12" />
-        <div className="absolute top-1/3 left-12 w-3 h-3 bg-[#59D4C8] rounded-full opacity-40" />
-        <div className="absolute bottom-1/3 right-24 w-2 h-2 bg-[#F5A623] rounded-full opacity-50" />
 
         <div className={`relative z-10 max-w-md transition-all duration-1000 ease-out ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           {/* Logo */}

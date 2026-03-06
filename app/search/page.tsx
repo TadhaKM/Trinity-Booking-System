@@ -152,22 +152,23 @@ function SearchPageContent() {
                 className="group cursor-pointer hover-lift"
               >
                 <div className="bg-white rounded-2xl overflow-hidden shadow-lg shadow-gray-200/60">
-                  <div className="relative h-48 card-gradient-mint">
+                  <div className="relative h-48 bg-slate-100">
                     {event.imageUrl.startsWith('data:') ? (
-                      <img src={event.imageUrl} alt={event.title} className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-60" />
+                      <img src={event.imageUrl} alt={event.title} className="absolute inset-0 w-full h-full object-cover" />
                     ) : (
                       <Image
                         src={event.imageUrl}
                         alt={event.title}
                         fill
-                        className="object-cover mix-blend-overlay opacity-60"
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
                     )}
                     <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-[#1A1A2E] px-3 py-1 rounded-full text-xs font-semibold">
                       {event.category}
                     </div>
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <h3 className="text-lg font-bold text-white drop-shadow-lg line-clamp-1">{event.title}</h3>
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+                      <h3 className="text-lg font-bold text-white line-clamp-1">{event.title}</h3>
                     </div>
                   </div>
                   <div className="p-5">

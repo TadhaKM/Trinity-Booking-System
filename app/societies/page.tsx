@@ -37,47 +37,26 @@ interface SocietyWithContent {
   upcomingEvent: UpcomingEvent | null;
 }
 
-interface ActivityItem {
-  id: string;
-  type: 'booking' | 'viewing' | 'soldout' | 'newfollow';
-  message: string;
-  timestamp: string;
-}
-
 const CATEGORIES = ['All', 'Arts & Culture', 'Academic', 'Music', 'Sports & Fitness', 'Debate & Speaking', 'Social'];
 const CATEGORY_ICONS: Record<string, string> = {
   'Arts & Culture': '🎨', Academic: '📚', Music: '🎵', 'Sports & Fitness': '⚽', 'Debate & Speaking': '🎤', Social: '🌍',
 };
 
-const ACTIVITY_ICONS: Record<string, { icon: string; color: string }> = {
-  booking: { icon: '🎫', color: 'bg-[#1A6FEF]/10 text-[#1A6FEF]' },
-  viewing: { icon: '👀', color: 'bg-[#F5A623]/10 text-[#F5A623]' },
-  soldout: { icon: '🔥', color: 'bg-red-50 text-red-500' },
-  newfollow: { icon: '💙', color: 'bg-[#59D4C8]/10 text-[#0A2E6E]' },
-};
-
 export default function SocietiesPage() {
   const user = useAuthStore((state) => state.user);
   const [societies, setSocieties] = useState<SocietyWithContent[]>([]);
-  const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [socRes, actRes] = await Promise.all([
-          fetch(user ? `/api/societies?userId=${user.id}` : '/api/societies'),
-          fetch('/api/activity/trending'),
-        ]);
-        const socData = await socRes.json();
-        const actData = await actRes.json();
-        setSocieties(Array.isArray(socData) ? socData : []);
-        setActivities(actData.activities || []);
+        const res = await fetch(user ? `/api/societies?userId=${user.id}` : '/api/societies');
+        const data = await res.json();
+        setSocieties(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching societies:', error);
       } finally {
         setLoading(false);
       }
@@ -87,12 +66,8 @@ export default function SocietiesPage() {
   }, [user]);
 
   const filtered = useMemo(() => {
-    return societies.filter((s) => {
-      const matchesCategory = activeCategory === 'All' || s.category === activeCategory;
-      const matchesSearch = search.trim() === '' || s.name.toLowerCase().includes(search.toLowerCase()) || s.description.toLowerCase().includes(search.toLowerCase());
-      return matchesCategory && matchesSearch;
-    });
-  }, [societies, activeCategory, search]);
+    return societies.filter((s) => activeCategory === 'All' || s.category === activeCategory);
+  }, [societies, activeCategory]);
 
   const handleFollow = async (societyId: string) => {
     if (!user) return;
@@ -136,55 +111,20 @@ export default function SocietiesPage() {
         <div className="absolute bottom-8 right-16 w-1.5 h-1.5 bg-[#F5A623] rounded-full opacity-40" />
 
         <div className={`relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 transition-all duration-1000 ease-out ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-            <div>
-              <div className="inline-flex items-center gap-2 bg-white/8 text-white/70 px-3 py-1.5 rounded-full text-xs font-bold tracking-wide uppercase mb-4 border border-white/10">
-                <svg className="w-3.5 h-3.5 text-[#59D4C8]" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" /></svg>
-                Community
-              </div>
-              <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight" data-testid="societies-title">
-                TCD Societies
-              </h1>
-              <p className="text-white/40 mt-2 text-lg">
-                {societies.length} societies &middot; Follow your favourites and stay up to date
-              </p>
+          <div>
+            <div className="inline-flex items-center gap-2 bg-white/8 text-white/70 px-3 py-1.5 rounded-full text-xs font-bold tracking-wide uppercase mb-4 border border-white/10">
+              <svg className="w-3.5 h-3.5 text-[#59D4C8]" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" /></svg>
+              Community
             </div>
-
-            {/* Search */}
-            <div className="w-full md:w-96">
-              <div className="relative">
-                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                <input
-                  type="text"
-                  placeholder="Search societies..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  data-testid="societies-search"
-                  className="w-full pl-12 pr-4 py-3.5 bg-white/8 border border-white/10 rounded-xl text-white placeholder-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-[#59D4C8]/30 focus:border-[#59D4C8]/30 transition-all duration-300"
-                />
-              </div>
-            </div>
+            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight" data-testid="societies-title">
+              TCD Societies
+            </h1>
+            <p className="text-white/40 mt-2 text-lg">
+              {societies.length} societies &middot; Follow your favourites and stay up to date
+            </p>
           </div>
         </div>
       </div>
-
-      {/* ─── TRENDING TICKER ──────────────────────── */}
-      {activities.length > 0 && (
-        <div className="bg-[#0A2E6E] border-t border-white/5 overflow-hidden" data-testid="trending-ticker">
-          <div className="marquee-track animate-ticker py-3">
-            {[...activities, ...activities].map((item, i) => {
-              const style = ACTIVITY_ICONS[item.type] || { icon: '📢', color: 'bg-slate-100 text-slate-600' };
-              return (
-                <div key={`${item.id}-${i}`} className="inline-flex items-center gap-2.5 mx-6 flex-shrink-0" data-testid={`ticker-item-${i}`}>
-                  <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-sm ${style.color}`}>{style.icon}</span>
-                  <span className="text-white/60 text-sm font-medium whitespace-nowrap">{item.message}</span>
-                  <span className="w-1 h-1 bg-white/20 rounded-full" />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* ─── CATEGORY PILLS ──────────────────────── */}
       <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-xl border-b border-slate-200/50" data-testid="categories-filter">

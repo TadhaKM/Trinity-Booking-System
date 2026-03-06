@@ -249,42 +249,44 @@ export default function HomePage() {
                       ) : (
                         <div className="absolute inset-0 bg-gradient-to-br from-[#0A2E6E] to-[#1A6FEF]" />
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-500" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
-                      {/* Category badge */}
-                      <div className="absolute top-5 left-5 bg-white/90 backdrop-blur-md text-[#0A2E6E] px-3.5 py-1.5 rounded-full text-xs font-bold shadow-sm z-10" data-testid={`event-category-${index}`}>
+                      {/* Category badge — z-20 so it always sits above the text overlay */}
+                      <div className="absolute top-5 left-5 bg-white/90 backdrop-blur-md text-[#0A2E6E] px-3.5 py-1.5 rounded-full text-xs font-bold shadow-sm z-20" data-testid={`event-category-${index}`}>
                         {CATEGORY_ICONS[event.category] || '📌'} {event.category}
                       </div>
 
                       {isLow && (
-                        <div className="absolute top-5 right-5 bg-gradient-to-r from-[#FF6B6B] to-[#ee5a5a] text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-lg badge-pulse z-10">
+                        <div className="absolute top-5 right-5 bg-gradient-to-r from-[#FF6B6B] to-[#ee5a5a] text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-lg badge-pulse z-20">
                           Only {ticketsLeft} left
                         </div>
                       )}
 
-                      {/* Content overlay */}
-                      <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-1 group-hover:translate-y-0 transition-transform duration-300 z-10">
-                        <h3 className={`font-bold text-white drop-shadow-lg line-clamp-2 mb-3 ${isFeatured ? 'text-2xl md:text-3xl' : 'text-xl'}`} data-testid={`event-title-${index}`}>
+                      {/* Content overlay — z-10 (below badges) */}
+                      <div className={`absolute bottom-0 left-0 right-0 translate-y-1 group-hover:translate-y-0 transition-transform duration-300 z-10 ${isFeatured || isTall ? 'p-6' : 'p-4'}`}>
+                        <h3 className={`font-bold text-white drop-shadow-lg line-clamp-2 ${isFeatured ? 'text-2xl md:text-3xl mb-3' : isTall ? 'text-xl mb-3' : 'text-base mb-2'}`} data-testid={`event-title-${index}`}>
                           {event.title}
                         </h3>
-                        <div className="flex flex-wrap items-center gap-3 text-sm text-white/80">
-                          <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm px-3 py-1 rounded-full">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                            {formatDate(event.startDate)}
+                        {(isFeatured || isTall) && (
+                          <div className="flex flex-wrap items-center gap-3 text-sm text-white/80">
+                            <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm px-3 py-1 rounded-full">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                              {formatDate(event.startDate)}
+                            </div>
+                            <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm px-3 py-1 rounded-full">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                              <span className="truncate max-w-[150px]">{event.location}</span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm px-3 py-1 rounded-full">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                            <span className="truncate max-w-[150px]">{event.location}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between mt-4">
+                        )}
+                        <div className={`flex items-center justify-between ${isFeatured || isTall ? 'mt-4' : 'mt-2'}`}>
                           {event.ticketTypes && event.ticketTypes.length > 0 && (
-                            <span className="text-lg font-bold text-white bg-white/15 backdrop-blur-sm px-4 py-1.5 rounded-full" data-testid={`event-price-${index}`}>
+                            <span className={`font-bold text-white bg-white/15 backdrop-blur-sm rounded-full ${isFeatured || isTall ? 'text-lg px-4 py-1.5' : 'text-sm px-3 py-1'}`} data-testid={`event-price-${index}`}>
                               {event.ticketTypes[0].price === 0 ? 'Free' : formatPrice(Math.min(...event.ticketTypes.map((tt) => tt.price)))}
                             </span>
                           )}
-                          <div className="w-11 h-11 rounded-full bg-white flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300">
-                            <svg className="w-5 h-5 text-[#0A2E6E]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                          <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300">
+                            <svg className="w-4 h-4 text-[#0A2E6E]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                           </div>
                         </div>
                       </div>

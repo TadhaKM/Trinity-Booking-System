@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuthStore } from '@/lib/auth-store';
@@ -40,10 +40,11 @@ interface Post {
   createdAt: string;
 }
 
-export default function OrganiserDashboardPage() {
+function OrganiserDashboardContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const user = useAuthStore((state) => state.user);
-  const [activeTab, setActiveTab] = useState<'events' | 'posts'>('events');
+  const [activeTab, setActiveTab] = useState<'events' | 'posts' | 'payouts'>('events');
 
   // Events state
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -66,6 +67,17 @@ export default function OrganiserDashboardPage() {
   const [postSubmitting, setPostSubmitting] = useState(false);
   const [societyEvents, setSocietyEvents] = useState<{ id: string; title: string }[]>([]);
   const [pinning, setPinning] = useState<string | null>(null);
+
+  // Payouts state
+  const [connectStatus, setConnectStatus] = useState<{
+    connected: boolean;
+    payoutsEnabled: boolean;
+    chargesEnabled?: boolean;
+    stripeConfigured: boolean;
+    requirements?: string[];
+  } | null>(null);
+  const [connectLoading, setConnectLoading] = useState(false);
+  const [connectError, setConnectError] = useState('');
 
   const handleDeleteEvent = async (eventId: string, title: string) => {
     if (!user) return;
@@ -92,6 +104,15 @@ export default function OrganiserDashboardPage() {
       setDeletingId(null);
     }
   };
+
+  // After Stripe onboarding redirect, switch to payouts tab and refresh status
+  useEffect(() => {
+    const connectParam = searchParams?.get('connect');
+    if (connectParam === 'success' || connectParam === 'refresh') {
+      setActiveTab('payouts');
+      setConnectStatus(null); // force re-fetch
+    }
+  }, [searchParams]);
 
   // Load dashboard stats + events
   useEffect(() => {
@@ -125,6 +146,55 @@ export default function OrganiserDashboardPage() {
     if (activeTab !== 'posts' || !user) return;
     loadPosts();
   }, [activeTab, user]);
+
+  // Load Stripe Connect status when Payouts tab is opened
+  useEffect(() => {
+    if (activeTab !== 'payouts' || !user || connectStatus !== null) return;
+    fetch(`/api/organiser/connect/status?userId=${user.id}`)
+      .then((r) => r.json())
+      .then(setConnectStatus)
+      .catch(() => setConnectStatus({ connected: false, payoutsEnabled: false, stripeConfigured: false }));
+  }, [activeTab, user, connectStatus]);
+
+  const handleConnectOnboard = async () => {
+    if (!user) return;
+    setConnectLoading(true);
+    setConnectError('');
+    try {
+      const res = await fetch('/api/organiser/connect/onboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setConnectError(data.error || 'Failed to start onboarding.'); return; }
+      window.location.href = data.url;
+    } catch {
+      setConnectError('Failed to start onboarding. Please try again.');
+    } finally {
+      setConnectLoading(false);
+    }
+  };
+
+  const handleOpenStripeDashboard = async () => {
+    if (!user) return;
+    setConnectLoading(true);
+    setConnectError('');
+    try {
+      const res = await fetch('/api/organiser/connect/dashboard-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setConnectError(data.error || 'Failed to generate dashboard link.'); return; }
+      window.open(data.url, '_blank');
+    } catch {
+      setConnectError('Failed to open dashboard. Please try again.');
+    } finally {
+      setConnectLoading(false);
+    }
+  };
 
   const loadPosts = async () => {
     if (!user) return;
@@ -288,17 +358,21 @@ export default function OrganiserDashboardPage() {
       {/* Tabs */}
       <div className="border-b border-gray-200 mb-6">
         <nav className="flex gap-6">
-          {(['events', 'posts'] as const).map((tab) => (
+          {([
+            { key: 'events',  label: '📅 Events'  },
+            { key: 'posts',   label: '📸 Posts'   },
+            { key: 'payouts', label: '💳 Payouts' },
+          ] as const).map(({ key, label }) => (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`pb-3 text-sm font-semibold capitalize transition-colors border-b-2 -mb-px ${
-                activeTab === tab
-                  ? 'border-[#0E73B9] text-[#0E73B9]'
+              key={key}
+              onClick={() => setActiveTab(key)}
+              className={`pb-3 text-sm font-semibold transition-colors border-b-2 -mb-px ${
+                activeTab === key
+                  ? 'border-[#0569b9] text-[#0569b9]'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              {tab === 'events' ? '📅 Events' : '📸 Posts'}
+              {label}
             </button>
           ))}
         </nav>
@@ -436,7 +510,7 @@ export default function OrganiserDashboardPage() {
                   />
                   {postForm.imagePreview && (
                     <div className="mt-2 relative h-40 w-40 rounded-lg overflow-hidden">
-                      <Image src={postForm.imagePreview} alt="Preview" fill className="object-cover" />
+                      <Image src={postForm.imagePreview} alt="Preview" fill className="object-cover" sizes="160px" />
                     </div>
                   )}
                 </div>
@@ -484,7 +558,7 @@ export default function OrganiserDashboardPage() {
                 <div key={post.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                   {/* Post image */}
                   <div className="relative aspect-square">
-                    <Image src={post.imageUrl} alt="Post" fill className="object-cover" />
+                    <Image src={post.imageUrl} alt="Post" fill className="object-cover" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
                     {post.isPinned && (
                       <span className="absolute top-2 left-2 bg-[#0E73B9] text-white text-xs px-2 py-0.5 rounded-full">
                         📌 Featured
@@ -519,6 +593,132 @@ export default function OrganiserDashboardPage() {
           )}
         </div>
       )}
+
+      {/* ── Payouts Tab ── */}
+      {activeTab === 'payouts' && (
+        <div className="max-w-2xl">
+          <div className="bg-white rounded-xl shadow-md p-8">
+            <h2 className="text-xl font-bold text-[#0A2E6E] mb-1">Payout Settings</h2>
+            <p className="text-sm text-gray-500 mb-6">
+              Connect a bank account via Stripe so you automatically receive revenue from ticket sales.
+              TCD Tickets retains a 5% platform fee; the rest is transferred to you after each payment.
+            </p>
+
+            {connectError && (
+              <div className="mb-5 p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm">
+                {connectError}
+              </div>
+            )}
+
+            {connectStatus === null ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0569b9]" />
+              </div>
+            ) : !connectStatus.stripeConfigured ? (
+              /* Stripe keys not set on server */
+              <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center">
+                <div className="text-4xl mb-3">⚙️</div>
+                <p className="font-bold text-[#0A2E6E] mb-1">Stripe not configured</p>
+                <p className="text-sm text-slate-500">
+                  Add <code className="bg-slate-100 px-1 rounded">STRIPE_SECRET_KEY</code> and{' '}
+                  <code className="bg-slate-100 px-1 rounded">NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code> to your
+                  server environment to enable payouts.
+                </p>
+              </div>
+            ) : !connectStatus.connected ? (
+              /* Not connected yet */
+              <div className="space-y-5">
+                <div className="bg-[#EFF2F7] rounded-xl p-5">
+                  <h3 className="font-semibold text-[#0A2E6E] mb-2">How it works</h3>
+                  <ol className="space-y-2 text-sm text-slate-600">
+                    <li className="flex gap-2"><span className="font-bold text-[#0569b9]">1.</span> Click <strong>Set up payouts</strong> below — you'll be taken to Stripe to verify your identity and add your bank account.</li>
+                    <li className="flex gap-2"><span className="font-bold text-[#0569b9]">2.</span> Once approved, every ticket sale automatically transfers your share within 2–7 business days.</li>
+                    <li className="flex gap-2"><span className="font-bold text-[#0569b9]">3.</span> Access a full earnings dashboard directly in Stripe Express any time.</li>
+                  </ol>
+                </div>
+                <button
+                  onClick={handleConnectOnboard}
+                  disabled={connectLoading}
+                  className="w-full bg-[#0569b9] text-white py-3.5 rounded-xl font-bold hover:bg-[#0A2E6E] transition disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {connectLoading ? (
+                    <><svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Redirecting to Stripe…</>
+                  ) : (
+                    <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>Set up payouts</>
+                  )}
+                </button>
+              </div>
+            ) : !connectStatus.payoutsEnabled ? (
+              /* Connected but onboarding incomplete */
+              <div className="space-y-5">
+                <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                  <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  <div>
+                    <p className="font-semibold text-amber-800 text-sm">Action required</p>
+                    <p className="text-sm text-amber-700 mt-0.5">
+                      Your Stripe account is not fully verified yet. Complete the onboarding steps to enable payouts.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleConnectOnboard}
+                  disabled={connectLoading}
+                  className="w-full bg-amber-500 text-white py-3.5 rounded-xl font-bold hover:bg-amber-600 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {connectLoading ? 'Redirecting…' : 'Complete Stripe verification →'}
+                </button>
+              </div>
+            ) : (
+              /* Fully connected and active */
+              <div className="space-y-5">
+                <div className="flex items-start gap-3 p-4 bg-green-50 border border-green-200 rounded-xl">
+                  <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  <div>
+                    <p className="font-semibold text-green-800 text-sm">Payouts active</p>
+                    <p className="text-sm text-green-700 mt-0.5">
+                      Your bank account is connected. Revenue from ticket sales will be automatically transferred after each payment.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-[#EFF2F7] rounded-xl p-4 text-center">
+                    <p className="text-xs text-slate-500 mb-1">Platform fee</p>
+                    <p className="text-2xl font-black text-[#0569b9]">5%</p>
+                    <p className="text-xs text-slate-400 mt-0.5">retained by TCD Tickets</p>
+                  </div>
+                  <div className="bg-[#EFF2F7] rounded-xl p-4 text-center">
+                    <p className="text-xs text-slate-500 mb-1">Your earnings</p>
+                    <p className="text-2xl font-black text-green-600">95%</p>
+                    <p className="text-xs text-slate-400 mt-0.5">of each ticket sale</p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleOpenStripeDashboard}
+                  disabled={connectLoading}
+                  className="w-full border-2 border-[#0569b9] text-[#0569b9] py-3.5 rounded-xl font-bold hover:bg-[#0569b9]/5 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {connectLoading ? 'Opening…' : (
+                    <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>Open Stripe Earnings Dashboard</>
+                  )}
+                </button>
+                <p className="text-xs text-center text-slate-400">
+                  The dashboard link is single-use and expires after a few minutes.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+export default function OrganiserDashboardPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0569b9]" /></div>}>
+      <OrganiserDashboardContent />
+    </Suspense>
   );
 }

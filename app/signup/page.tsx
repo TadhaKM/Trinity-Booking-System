@@ -41,9 +41,7 @@ export default function SignupPage() {
 
   const handleGoogleSignup = () => {
     setGoogleLoading(true);
-    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-    const redirectUrl = window.location.origin + '/auth/callback';
-    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+    window.location.href = '/api/auth/google';
   };
 
   const validateField = (field: string, value: string) => {
@@ -129,12 +127,9 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen bg-[#EFF2F7] flex" data-testid="signup-page">
       {/* Left Panel */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-[#0A2E6E] items-center justify-center p-12">
+      <div className="hidden lg:flex lg:w-[38%] relative overflow-hidden bg-[#0A2E6E] items-center justify-center p-12">
         <div className="absolute inset-0 noise-overlay" />
-        <div className="absolute top-16 right-16 w-64 h-64 border border-white/8 rounded-full" />
         <div className="absolute bottom-16 left-16 w-40 h-40 border border-[#59D4C8]/15 rounded-3xl rotate-12" />
-        <div className="absolute top-1/4 left-20 w-3 h-3 bg-[#F5A623] rounded-full opacity-40" />
-        <div className="absolute bottom-1/4 right-20 w-2 h-2 bg-[#59D4C8] rounded-full opacity-50" />
 
         <div className={`relative z-10 max-w-md transition-all duration-1000 ease-out ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <Link href="/" className="flex items-center gap-3 mb-14 group" data-testid="signup-logo">

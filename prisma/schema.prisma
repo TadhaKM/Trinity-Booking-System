@@ -12,15 +12,17 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  name        String
-  password       String   @default("")
-  isOrganiser    Boolean  @default(false)
-  isAdmin        Boolean  @default(false)
-  profilePicture String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String   @id @default(cuid())
+  email            String   @unique
+  name             String
+  password         String   @default("")
+  isOrganiser      Boolean  @default(false)
+  isAdmin          Boolean  @default(false)
+  profilePicture   String?
+  stripeConnectId  String?  // Stripe Connect Express account ID
+  payoutsEnabled   Boolean  @default(false) // true once Stripe onboarding complete
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   orders    Order[]
   following SocietyFollower[]
@@ -138,6 +140,17 @@ model SocietyPost {
   society Society    @relation(fields: [societyId], references: [id], onDelete: Cascade)
   event   Event?     @relation(fields: [eventId], references: [id], onDelete: SetNull)
   likes   PostLike[]
+}
+
+// ── Stripe Connect Demo ──────────────────────────────────────────────────────
+// Stores connected accounts created via the demo integration.
+// In a real integration, link stripeAccountId to your User model instead.
+model ConnectDemoAccount {
+  id              String   @id @default(cuid())
+  stripeAccountId String   @unique  // The Stripe acct_xxx ID
+  displayName     String
+  email           String
+  createdAt       DateTime @default(now())
 }
 
 model PostLike {

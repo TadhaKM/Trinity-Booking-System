@@ -47,11 +47,14 @@ export function proxy(request: NextRequest) {
   // 'unsafe-inline' for styles is required by Tailwind; scripts remain strict.
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // 'unsafe-inline' required for Next.js inline hydration scripts; 'unsafe-eval' for Turbopack dev runtime
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://api.mapbox.com", // 'unsafe-inline' required for Next.js; Stripe + Mapbox
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.mapbox.com",
     "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob: https://images.unsplash.com https://cdn.britannica.com https://upload.wikimedia.org https://lh3.googleusercontent.com",
-    "connect-src 'self' https://api.anthropic.com https://auth.emergentagent.com https://demobackend.emergentagent.com",
+    "img-src 'self' data: blob: https:",
+    // Mapbox tile/API servers + Stripe
+    "connect-src 'self' https://api.anthropic.com https://api.stripe.com https://*.turso.io https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com",
+    "worker-src blob:",
+    "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
