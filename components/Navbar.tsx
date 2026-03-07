@@ -57,6 +57,9 @@ export default function Navbar() {
     router.push('/login');
   };
 
+  // Hide navbar on auth pages so the full-screen layout fills edge-to-edge
+  if (pathname === '/login' || pathname === '/signup') return null;
+
   const navItems = [
     { href: '/', label: 'Home' },
     { href: '/campus-world', label: 'Campus World' },

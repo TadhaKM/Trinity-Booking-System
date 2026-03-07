@@ -125,7 +125,16 @@ export default function SignupPage() {
   const inputBase = "w-full pl-12 pr-4 py-3.5 border rounded-xl text-[#0A2E6E] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1A6FEF]/30 focus:border-[#1A6FEF] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-slate-50/50 hover:bg-white hover:border-slate-300";
 
   return (
-    <div className="min-h-screen bg-[#EFF2F7] flex" data-testid="signup-page">
+    <div className="min-h-screen bg-[#EFF2F7] flex relative" data-testid="signup-page">
+      {/* Back button */}
+      <Link href="/" className="absolute top-5 left-5 z-20 flex items-center gap-1.5 text-sm font-semibold text-white/70 hover:text-white transition-colors lg:block hidden">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+        Back
+      </Link>
+      <Link href="/" className="absolute top-5 left-5 z-20 flex items-center gap-1.5 text-sm font-semibold text-[#0A2E6E]/60 hover:text-[#0A2E6E] transition-colors lg:hidden">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+        Back
+      </Link>
       {/* Left Panel */}
       <div className="hidden lg:flex lg:w-[38%] relative overflow-hidden bg-[#0A2E6E] items-center justify-center p-12">
         <div className="absolute inset-0 noise-overlay" />

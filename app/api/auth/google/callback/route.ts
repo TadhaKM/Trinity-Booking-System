@@ -63,16 +63,20 @@ export async function GET(request: NextRequest) {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Upsert user in DB
+    // Restrict to TCD email addresses only
+    if (!normalizedEmail.endsWith('@tcd.ie')) {
+      return NextResponse.redirect(`${origin}/login?error=tcd_only`);
+    }
+
+    // Upsert user in DB — always sync the Google profile picture on every login
     let user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
 
     if (user) {
-      if (!user.profilePicture && picture) {
-        user = await prisma.user.update({
-          where: { email: normalizedEmail },
-          data: { profilePicture: picture },
-        });
-      }
+      // Always update profile picture from Google so it stays current
+      user = await prisma.user.update({
+        where: { email: normalizedEmail },
+        data: { profilePicture: picture || user.profilePicture },
+      });
     } else {
       user = await prisma.user.create({
         data: {
@@ -98,8 +102,10 @@ export async function GET(request: NextRequest) {
       })
     ).toString('base64');
 
-    // Redirect to a client-side page that stores user in Zustand and navigates home
-    return NextResponse.redirect(`${origin}/auth/google-success?data=${userData}`);
+    // Redirect to a client-side page that stores user in Zustand and navigates home.
+    // encodeURIComponent is required — base64 contains '+' which browsers decode as
+    // a space in query params, corrupting the string and causing atob() to throw.
+    return NextResponse.redirect(`${origin}/auth/google-success?data=${encodeURIComponent(userData)}`);
   } catch (err) {
     console.error('Google OAuth callback error:', err);
     return NextResponse.redirect(`${origin}/login?error=auth_failed`);

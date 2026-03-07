@@ -98,11 +98,11 @@ function SearchPageContent() {
               onClick={() =>
                 setSelectedCategory(category === 'All' ? '' : category)
               }
-              className={`px-4 py-2 rounded-lg font-medium transition ${
+              className={`px-4 py-2 rounded-full font-semibold transition-all duration-200 ${
                 (category === 'All' && !selectedCategory) ||
                 selectedCategory === category
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-black hover:bg-gray-200'
+                  ? 'bg-[#0569b9] text-white shadow-md shadow-[#0569b9]/20'
+                  : 'bg-[#EFF2F7] text-[#0A2E6E] hover:bg-[#0569b9]/10'
               }`}
             >
               {category}

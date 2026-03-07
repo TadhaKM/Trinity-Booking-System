@@ -34,6 +34,8 @@ function LoginContent() {
     const authError = searchParams.get('error');
     if (authError === 'auth_failed') {
       setError('Google sign-in failed. Please try again.');
+    } else if (authError === 'tcd_only') {
+      setError('Google sign-in is only available for Trinity College Dublin (@tcd.ie) email addresses.');
     }
   }, [searchParams]);
 
@@ -95,7 +97,16 @@ function LoginContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#EFF2F7] flex" data-testid="login-page">
+    <div className="min-h-screen bg-[#EFF2F7] flex relative" data-testid="login-page">
+      {/* Back button */}
+      <Link href="/" className="absolute top-5 left-5 z-20 flex items-center gap-1.5 text-sm font-semibold text-white/70 hover:text-white transition-colors lg:block hidden">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+        Back
+      </Link>
+      <Link href="/" className="absolute top-5 left-5 z-20 flex items-center gap-1.5 text-sm font-semibold text-[#0A2E6E]/60 hover:text-[#0A2E6E] transition-colors lg:hidden">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+        Back
+      </Link>
       {/* Left Panel - Solid navy with texture */}
       <div className="hidden lg:flex lg:w-[38%] relative overflow-hidden bg-[#0A2E6E] items-center justify-center p-12">
         {/* Subtle grain texture */}

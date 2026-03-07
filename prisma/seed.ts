@@ -1,6 +1,22 @@
 import { PrismaClient } from '@prisma/client';
+import { PrismaLibSQL } from '@prisma/adapter-libsql';
+import { createClient } from '@libsql/client';
+import * as dotenv from 'dotenv';
 
-const prisma = new PrismaClient();
+dotenv.config();
+
+function createPrisma(): PrismaClient {
+  const tursoUrl = process.env.TURSO_DATABASE_URL;
+  const tursoToken = process.env.TURSO_AUTH_TOKEN;
+  if (tursoUrl && tursoToken) {
+    const libsql = createClient({ url: tursoUrl, authToken: tursoToken });
+    const adapter = new PrismaLibSQL(libsql);
+    return new PrismaClient({ adapter } as any);
+  }
+  return new PrismaClient();
+}
+
+const prisma = createPrisma();
 
 async function main() {
   // Clear existing data
@@ -514,6 +530,430 @@ async function main() {
         },
       },
     }),
+
+    // ── NEW EVENTS ─────────────────────────────────────────────────────────
+
+    // Comedy Night — The Buttery
+    prisma.event.create({
+      data: {
+        title: 'Stand-Up Comedy Night',
+        description:
+          'Trinity\'s best emerging comedians take the stage for a night of laughs. Hosted by the DU Comedy Society. Expect sharp wit, campus in-jokes, and the occasional roast of college life.',
+        societyId: societies[6] ? societies[6].id : societies[0].id,
+        startDate: new Date('2026-04-03T20:00:00'),
+        endDate: new Date('2026-04-03T22:30:00'),
+        location: 'The Buttery',
+        locationCoords: JSON.stringify({ lat: 53.34365, lng: -6.25415 }),
+        category: 'Arts & Culture',
+        imageUrl: 'https://images.unsplash.com/photo-1527224538127-2104bb71c51b?w=800',
+        tags: JSON.stringify(['comedy', 'stand-up', 'live', 'buttery']),
+        organiserId: users[1].id,
+        ticketTypes: {
+          create: [
+            { name: 'Standard', price: 6.0, quantity: 120, available: 120 },
+            { name: 'Student', price: 4.0, quantity: 80, available: 80 },
+          ],
+        },
+      },
+    }),
+
+    // Trinity Hackathon — Hamilton Building
+    prisma.event.create({
+      data: {
+        title: 'TrinityHack 2026',
+        description:
+          '24-hour hackathon open to all Trinity students. Build apps, games, or tools around this year\'s theme: "Technology for Social Good." Prizes worth over €5,000. Free food, coffee, and mentors on hand throughout.',
+        societyId: societies[1].id,
+        startDate: new Date('2026-04-18T10:00:00'),
+        endDate: new Date('2026-04-19T12:00:00'),
+        location: 'Hamilton Building',
+        locationCoords: JSON.stringify({ lat: 53.34285, lng: -6.25095 }),
+        category: 'Academic',
+        imageUrl: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800',
+        tags: JSON.stringify(['hackathon', 'coding', 'prizes', 'tech']),
+        organiserId: users[3].id,
+        ticketTypes: {
+          create: [
+            { name: 'Solo Participant', price: 0.0, quantity: 50, available: 50 },
+            { name: 'Team (up to 4)', price: 0.0, quantity: 100, available: 100 },
+          ],
+        },
+      },
+    }),
+
+    // Law Society Moot — Law School
+    prisma.event.create({
+      data: {
+        title: 'Annual Moot Court Competition',
+        description:
+          'Trinity\'s premier advocacy competition. Watch finalists argue a landmark case before a panel of senior counsel and High Court judges. The highest-stakes mooting on the island of Ireland.',
+        societyId: societies[7] ? societies[7].id : societies[3].id,
+        startDate: new Date('2026-04-22T14:00:00'),
+        endDate: new Date('2026-04-22T17:00:00'),
+        location: 'Law School, House 39',
+        locationCoords: JSON.stringify({ lat: 53.34355, lng: -6.25285 }),
+        category: 'Academic',
+        imageUrl: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800',
+        tags: JSON.stringify(['law', 'moot', 'debate', 'competition']),
+        organiserId: users[3].id,
+        ticketTypes: {
+          create: [
+            { name: 'Public Gallery', price: 0.0, quantity: 80, available: 80 },
+          ],
+        },
+      },
+    }),
+
+    // Rugby Club — College Park
+    prisma.event.create({
+      data: {
+        title: 'College Cup Finals — TCD vs UCD',
+        description:
+          'The biggest match of the year. Trinity takes on UCD in the Leinster Senior Cup final at College Park. Join thousands of students in the stands for this historic clash.',
+        societyId: societies[8] ? societies[8].id : societies[0].id,
+        startDate: new Date('2026-04-11T15:00:00'),
+        endDate: new Date('2026-04-11T17:00:00'),
+        location: 'College Park',
+        locationCoords: JSON.stringify({ lat: 53.34245, lng: -6.25395 }),
+        category: 'Sports & Fitness',
+        imageUrl: 'https://images.unsplash.com/photo-1544298621-35a764d00f1a?w=800',
+        tags: JSON.stringify(['rugby', 'sport', 'finals', 'college park']),
+        organiserId: users[1].id,
+        ticketTypes: {
+          create: [
+            { name: 'Student', price: 3.0, quantity: 500, available: 500 },
+            { name: 'General', price: 8.0, quantity: 200, available: 200 },
+          ],
+        },
+      },
+    }),
+
+    // International Food Festival — Front Square
+    prisma.event.create({
+      data: {
+        title: 'Global Food Festival',
+        description:
+          'A celebration of international cuisines brought to you by Trinity\'s cultural societies. Street-food stalls from 20+ countries, live music, and cultural performances. Free to attend — food sold at stalls.',
+        societyId: societies[9] ? societies[9].id : societies[2].id,
+        startDate: new Date('2026-05-02T12:00:00'),
+        endDate: new Date('2026-05-02T18:00:00'),
+        location: 'Front Square',
+        locationCoords: JSON.stringify({ lat: 53.34448, lng: -6.25476 }),
+        category: 'Social',
+        imageUrl: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800',
+        tags: JSON.stringify(['food', 'international', 'culture', 'festival']),
+        organiserId: users[1].id,
+        ticketTypes: {
+          create: [
+            { name: 'Free Entry', price: 0.0, quantity: 1000, available: 1000 },
+          ],
+        },
+      },
+    }),
+
+    // Jazz Night — The Pav
+    prisma.event.create({
+      data: {
+        title: 'Jazz at the Pav',
+        description:
+          'An intimate evening of live jazz from Trinity\'s award-winning Jazz Ensemble. Enjoy smooth sounds in the iconic surroundings of the Pavilion Bar, overlooking College Park.',
+        societyId: societies[2].id,
+        startDate: new Date('2026-04-17T19:30:00'),
+        endDate: new Date('2026-04-17T22:00:00'),
+        location: 'The Pavilion Bar',
+        locationCoords: JSON.stringify({ lat: 53.34218, lng: -6.25302 }),
+        category: 'Music',
+        imageUrl: 'https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=800',
+        tags: JSON.stringify(['jazz', 'live music', 'pav', 'ensemble']),
+        organiserId: users[1].id,
+        ticketTypes: {
+          create: [
+            { name: 'General Admission', price: 7.0, quantity: 90, available: 90 },
+          ],
+        },
+      },
+    }),
+
+    // Yoga & Mindfulness — Sports Centre
+    prisma.event.create({
+      data: {
+        title: 'Sunrise Yoga & Meditation',
+        description:
+          'Start your morning right with a guided yoga and mindfulness session. Suitable for all levels, mats provided. A perfect reset during exam season.',
+        societyId: societies[10] ? societies[10].id : societies[4].id,
+        startDate: new Date('2026-04-08T07:30:00'),
+        endDate: new Date('2026-04-08T09:00:00'),
+        location: 'Trinity Sports Centre',
+        locationCoords: JSON.stringify({ lat: 53.34155, lng: -6.25545 }),
+        category: 'Sports & Fitness',
+        imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800',
+        tags: JSON.stringify(['yoga', 'mindfulness', 'wellness', 'morning']),
+        organiserId: users[1].id,
+        ticketTypes: {
+          create: [
+            { name: 'Drop-in', price: 5.0, quantity: 40, available: 40 },
+          ],
+        },
+      },
+    }),
+
+    // Photography Exhibition — Douglas Hyde Gallery
+    prisma.event.create({
+      data: {
+        title: 'Frames of Trinity — Student Photography Exhibition',
+        description:
+          'An exhibition of works from the TCD Photography Society\'s annual competition. Over 80 prints selected from 400+ entries capturing student life, landscapes, and abstract ideas. Free to view all week.',
+        societyId: societies[11] ? societies[11].id : societies[5].id,
+        startDate: new Date('2026-04-14T10:00:00'),
+        endDate: new Date('2026-04-18T18:00:00'),
+        location: 'Douglas Hyde Gallery',
+        locationCoords: JSON.stringify({ lat: 53.34398, lng: -6.25518 }),
+        category: 'Arts & Culture',
+        imageUrl: 'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=800',
+        tags: JSON.stringify(['photography', 'exhibition', 'art', 'gallery']),
+        organiserId: users[3].id,
+        ticketTypes: {
+          create: [
+            { name: 'Free Entry', price: 0.0, quantity: 500, available: 500 },
+          ],
+        },
+      },
+    }),
+
+    // Engineering Expo — Engineering Building
+    prisma.event.create({
+      data: {
+        title: 'Trinity Engineering Expo 2026',
+        description:
+          'Final-year engineering students showcase their capstone projects to industry judges, academics, and the public. From sustainable infrastructure to AI-driven biomedical devices — the future of Irish engineering is here.',
+        societyId: societies[12] ? societies[12].id : societies[1].id,
+        startDate: new Date('2026-05-07T10:00:00'),
+        endDate: new Date('2026-05-07T16:00:00'),
+        location: 'Engineering Building, Parsons Gallery',
+        locationCoords: JSON.stringify({ lat: 53.34195, lng: -6.25155 }),
+        category: 'Academic',
+        imageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800',
+        tags: JSON.stringify(['engineering', 'expo', 'capstone', 'innovation']),
+        organiserId: users[3].id,
+        ticketTypes: {
+          create: [
+            { name: 'General Admission', price: 0.0, quantity: 300, available: 300 },
+          ],
+        },
+      },
+    }),
+
+    // Classical Concert — Exam Hall
+    prisma.event.create({
+      data: {
+        title: 'Trinity Orchestra: Spring Gala',
+        description:
+          'The Trinity College Orchestra performs Beethoven\'s 5th Symphony alongside Ravel\'s Bolero in the magnificent Exam Hall. An unmissable evening of classical music in one of Ireland\'s most historic venues.',
+        societyId: societies[2].id,
+        startDate: new Date('2026-04-30T19:30:00'),
+        endDate: new Date('2026-04-30T21:30:00'),
+        location: 'Exam Hall, Front Square',
+        locationCoords: JSON.stringify({ lat: 53.34435, lng: -6.2559 }),
+        category: 'Music',
+        imageUrl: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=800',
+        tags: JSON.stringify(['classical', 'orchestra', 'beethoven', 'concert']),
+        organiserId: users[1].id,
+        ticketTypes: {
+          create: [
+            { name: 'Student', price: 12.0, quantity: 200, available: 200 },
+            { name: 'Adult', price: 20.0, quantity: 100, available: 100 },
+            { name: 'Concession', price: 10.0, quantity: 50, available: 50 },
+          ],
+        },
+      },
+    }),
+
+    // Charity Quiz — The Pav
+    prisma.event.create({
+      data: {
+        title: 'Charity Quiz Night',
+        description:
+          'Teams of up to 6 battle it out across 8 rounds of general knowledge, pop culture, and Trinity-specific trivia. All proceeds to Aware Ireland. Prizes for top three teams.',
+        societyId: societies[13] ? societies[13].id : societies[3].id,
+        startDate: new Date('2026-04-09T19:00:00'),
+        endDate: new Date('2026-04-09T21:30:00'),
+        location: 'The Pavilion Bar',
+        locationCoords: JSON.stringify({ lat: 53.34218, lng: -6.25302 }),
+        category: 'Social',
+        imageUrl: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800',
+        tags: JSON.stringify(['quiz', 'charity', 'social', 'trivia']),
+        organiserId: users[1].id,
+        ticketTypes: {
+          create: [
+            { name: 'Per Person', price: 5.0, quantity: 180, available: 180 },
+          ],
+        },
+      },
+    }),
+
+    // Careers Fair — O'Reilly Institute
+    prisma.event.create({
+      data: {
+        title: 'Trinity Tech Careers Fair',
+        description:
+          'Meet recruiters from 50+ companies including Google, Accenture, Stripe, and Workday. Bring your CV and LinkedIn QR code. Internship and graduate roles across software, data, product, and UX.',
+        societyId: societies[1].id,
+        startDate: new Date('2026-04-29T11:00:00'),
+        endDate: new Date('2026-04-29T16:00:00'),
+        location: "O'Reilly Institute, Atrium",
+        locationCoords: JSON.stringify({ lat: 53.34265, lng: -6.25185 }),
+        category: 'Academic',
+        imageUrl: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800',
+        tags: JSON.stringify(['careers', 'tech', 'internship', 'recruitment']),
+        organiserId: users[3].id,
+        ticketTypes: {
+          create: [
+            { name: 'Student (Free)', price: 0.0, quantity: 600, available: 600 },
+          ],
+        },
+      },
+    }),
+
+    // Spoken Word / Poetry — Samuel Beckett Theatre
+    prisma.event.create({
+      data: {
+        title: 'Tongues: A Spoken Word Night',
+        description:
+          'Open-mic poetry and spoken word — raw, powerful, and unapologetically student. Hosted by the TCD Literary Society. Sign up on the door to perform; audience spots always available.',
+        societyId: societies[14] ? societies[14].id : societies[0].id,
+        startDate: new Date('2026-04-24T19:00:00'),
+        endDate: new Date('2026-04-24T21:00:00'),
+        location: 'Samuel Beckett Theatre',
+        locationCoords: JSON.stringify({ lat: 53.34305, lng: -6.25475 }),
+        category: 'Arts & Culture',
+        imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800',
+        tags: JSON.stringify(['poetry', 'spoken word', 'open mic', 'literary']),
+        organiserId: users[1].id,
+        ticketTypes: {
+          create: [
+            { name: 'Audience', price: 3.0, quantity: 100, available: 100 },
+            { name: 'Performer', price: 0.0, quantity: 20, available: 20 },
+          ],
+        },
+      },
+    }),
+
+    // Science Week Lecture — Lloyd Building
+    prisma.event.create({
+      data: {
+        title: 'The Science of Sleep: Public Lecture',
+        description:
+          'Professor Aoife Brennan (Neuroscience, TCD) presents her groundbreaking research on circadian rhythms and cognitive performance. Q&A to follow. Accessible to all — no scientific background required.',
+        societyId: societies[15] ? societies[15].id : societies[1].id,
+        startDate: new Date('2026-05-14T18:00:00'),
+        endDate: new Date('2026-05-14T19:30:00'),
+        location: 'Lloyd Building, Lecture Hall 2',
+        locationCoords: JSON.stringify({ lat: 53.34308, lng: -6.25148 }),
+        category: 'Academic',
+        imageUrl: 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?w=800',
+        tags: JSON.stringify(['science', 'lecture', 'neuroscience', 'public']),
+        organiserId: users[3].id,
+        ticketTypes: {
+          create: [
+            { name: 'Free', price: 0.0, quantity: 200, available: 200 },
+          ],
+        },
+      },
+    }),
+
+    // End of Year Ball — Dining Hall
+    prisma.event.create({
+      data: {
+        title: 'Trinity Summer Ball 2026',
+        description:
+          'The unmissable end-of-year celebration. Three stages of live music, DJ sets, gourmet food stalls, and a fairground in Front Square. Black tie optional. Tickets strictly limited — sell out every year.',
+        societyId: societies[0].id,
+        startDate: new Date('2026-06-05T19:00:00'),
+        endDate: new Date('2026-06-06T02:00:00'),
+        location: 'Front Square & Dining Hall',
+        locationCoords: JSON.stringify({ lat: 53.34448, lng: -6.25476 }),
+        category: 'Social',
+        imageUrl: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800',
+        tags: JSON.stringify(['ball', 'summer', 'live music', 'party']),
+        organiserId: users[1].id,
+        ticketTypes: {
+          create: [
+            { name: 'Student', price: 45.0, quantity: 800, available: 800 },
+            { name: 'Guest (non-TCD)', price: 60.0, quantity: 200, available: 200 },
+          ],
+        },
+      },
+    }),
+
+    // Robotics Demo — Engineering Building
+    prisma.event.create({
+      data: {
+        title: 'TCD Robotics Club: Live Demo Day',
+        description:
+          'Watch Trinity\'s robotics teams compete in live challenges — line-following bots, robotic arms, and autonomous drones. Interact with the machines and chat to the builders. Open to all.',
+        societyId: societies[16] ? societies[16].id : societies[1].id,
+        startDate: new Date('2026-04-16T13:00:00'),
+        endDate: new Date('2026-04-16T17:00:00'),
+        location: 'Engineering Building, Ground Floor',
+        locationCoords: JSON.stringify({ lat: 53.34195, lng: -6.25155 }),
+        category: 'Academic',
+        imageUrl: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800',
+        tags: JSON.stringify(['robotics', 'STEM', 'demo', 'engineering']),
+        organiserId: users[3].id,
+        ticketTypes: {
+          create: [
+            { name: 'Free Entry', price: 0.0, quantity: 250, available: 250 },
+          ],
+        },
+      },
+    }),
+
+    // GAA Match — College Park
+    prisma.event.create({
+      data: {
+        title: 'Intervarsity GAA Football Final',
+        description:
+          'TCD GAA Football Club face off against DCU in the Sigerson Cup quarter-final. Come support your college in one of the oldest intervarsity GAA competitions in the country.',
+        societyId: societies[17] ? societies[17].id : societies[0].id,
+        startDate: new Date('2026-04-05T14:00:00'),
+        endDate: new Date('2026-04-05T16:00:00'),
+        location: 'College Park',
+        locationCoords: JSON.stringify({ lat: 53.34245, lng: -6.25395 }),
+        category: 'Sports & Fitness',
+        imageUrl: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800',
+        tags: JSON.stringify(['GAA', 'football', 'intervarsity', 'sport']),
+        organiserId: users[1].id,
+        ticketTypes: {
+          create: [
+            { name: 'Student', price: 0.0, quantity: 400, available: 400 },
+            { name: 'General', price: 5.0, quantity: 150, available: 150 },
+          ],
+        },
+      },
+    }),
+
+    // Mental Health Panel — GMB
+    prisma.event.create({
+      data: {
+        title: 'Let\'s Talk: Mental Health in College',
+        description:
+          'A candid panel discussion with counsellors, peer supporters, and students sharing their experiences. Resources and supports will be available on the day. Everyone welcome — anonymous questions accepted.',
+        societyId: societies[18] ? societies[18].id : societies[3].id,
+        startDate: new Date('2026-04-07T17:00:00'),
+        endDate: new Date('2026-04-07T19:00:00'),
+        location: 'Graduates Memorial Building (GMB)',
+        locationCoords: JSON.stringify({ lat: 53.34395, lng: -6.25545 }),
+        category: 'Social',
+        imageUrl: 'https://images.unsplash.com/photo-1559757175-0eb30cd8c063?w=800',
+        tags: JSON.stringify(['mental health', 'wellness', 'panel', 'support']),
+        organiserId: users[1].id,
+        ticketTypes: {
+          create: [
+            { name: 'Free', price: 0.0, quantity: 150, available: 150 },
+          ],
+        },
+      },
+    }),
   ]);
 
   // Create THIS WEEK events (for weekly updates)
@@ -865,7 +1305,7 @@ async function main() {
   console.log('Database seeded successfully!');
   console.log(`Created ${users.length} users`);
   console.log(`Created ${societies.length} societies`);
-  console.log(`Created ${events.length} events`);
+  console.log(`Created ${events.length + thisWeekEvents.length} events (${events.length} main + ${thisWeekEvents.length} this week)`);
   console.log(`Created ${coupons.length} coupons`);
   console.log(`Created ${posts.length} society posts`);
 }
