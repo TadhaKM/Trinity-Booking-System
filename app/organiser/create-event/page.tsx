@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/auth-store';
 import { useChatStore } from '@/lib/chat-store';
@@ -54,6 +54,12 @@ export default function CreateEventPage() {
   ]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // AI description suggestion
+  const [aiEnabled, setAiEnabled] = useState(true);
+  const [suggestion, setSuggestion] = useState('');
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const suggestionAbort = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -140,6 +146,50 @@ export default function CreateEventPage() {
 
     return () => clearTimeout(debounce);
   }, [formData.startDate, formData.startTime, formData.endDate, formData.endTime, formData.location]);
+
+  // AI description suggestion — fires when title changes (debounced 900 ms)
+  useEffect(() => {
+    if (!aiEnabled || formData.title.trim().length < 3) {
+      setSuggestion('');
+      return;
+    }
+
+    // Don't replace a description the user has already typed manually
+    if (formData.description.trim().length > 0) {
+      setSuggestion('');
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      if (suggestionAbort.current) suggestionAbort.current.abort();
+      suggestionAbort.current = new AbortController();
+
+      setIsSuggesting(true);
+      setSuggestion('');
+      try {
+        const res = await fetch('/api/events/suggest-description', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: formData.title,
+            category: formData.category,
+            location: formData.location,
+          }),
+          signal: suggestionAbort.current.signal,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSuggestion(data.suggestion ?? '');
+        }
+      } catch (e: any) {
+        if (e.name !== 'AbortError') console.error('[suggest]', e);
+      } finally {
+        setIsSuggesting(false);
+      }
+    }, 900);
+
+    return () => clearTimeout(timer);
+  }, [formData.title, formData.category, formData.location, aiEnabled]);
 
   const handleAddTicketType = () => {
     setTicketTypes([
@@ -331,7 +381,34 @@ export default function CreateEventPage() {
 
         {/* Basic Information */}
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold mb-4 text-black">Basic Information</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-black">Basic Information</h2>
+
+            {/* Think with AI toggle */}
+            <button
+              type="button"
+              onClick={() => {
+                setAiEnabled((v) => !v);
+                if (aiEnabled) setSuggestion('');
+              }}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all select-none ${
+                aiEnabled
+                  ? 'bg-[#0A2E6E] border-[#0A2E6E] text-white shadow-sm'
+                  : 'bg-white border-gray-300 text-gray-500 hover:border-gray-400'
+              }`}
+              title={aiEnabled ? 'Disable AI suggestions' : 'Enable AI suggestions'}
+            >
+              {/* Sparkle icon */}
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l2.09 6.26L20 10l-5.91 1.74L12 18l-2.09-6.26L4 10l5.91-1.74z" />
+              </svg>
+              Think with AI
+              {/* Pill toggle */}
+              <span className={`ml-1 relative inline-flex h-4 w-7 rounded-full transition-colors ${aiEnabled ? 'bg-white/30' : 'bg-gray-200'}`}>
+                <span className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition-transform shadow-sm ${aiEnabled ? 'translate-x-3.5' : 'translate-x-0.5'} ${!aiEnabled ? 'bg-gray-400' : ''}`} />
+              </span>
+            </button>
+          </div>
 
           <div className="space-y-4">
             <div>
@@ -375,6 +452,47 @@ export default function CreateEventPage() {
               />
               {errors.description && (
                 <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+              )}
+
+              {/* AI suggestion ghost */}
+              {aiEnabled && (isSuggesting || suggestion) && !formData.description.trim() && (
+                <div className={`mt-2 rounded-lg border transition-all ${
+                  isSuggesting
+                    ? 'border-dashed border-[#0A2E6E]/30 bg-[#0A2E6E]/3'
+                    : 'border-[#0A2E6E]/20 bg-[#EFF2F7]'
+                }`}>
+                  {isSuggesting ? (
+                    <div className="flex items-center gap-2 px-3 py-2.5 text-xs text-[#0A2E6E]/50">
+                      <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                      </svg>
+                      Generating suggestion…
+                    </div>
+                  ) : (
+                    <div className="px-3 py-2.5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-2 min-w-0">
+                          <svg className="w-3.5 h-3.5 text-[#0569b9] flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2l2.09 6.26L20 10l-5.91 1.74L12 18l-2.09-6.26L4 10l5.91-1.74z" />
+                          </svg>
+                          <p className="text-xs text-gray-500 italic leading-relaxed">{suggestion}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData((prev) => ({ ...prev, description: suggestion }));
+                            setSuggestion('');
+                            if (errors.description) setErrors({ ...errors, description: '' });
+                          }}
+                          className="flex-shrink-0 text-xs px-2.5 py-1 rounded-full bg-[#0569b9] text-white font-semibold hover:bg-[#0A2E6E] transition whitespace-nowrap"
+                        >
+                          Use this ↵
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 
