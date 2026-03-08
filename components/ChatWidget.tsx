@@ -39,7 +39,8 @@ export default function ChatWidget() {
     }
   }, [isOpen]);
 
-  const DEMO_MSG_LIMIT = 8;
+  const DEMO_MSG_LIMIT = 5;
+  const GUEST_MSG_LIMIT = 2;
 
   const getGuestCount = (): number => {
     if (typeof window === 'undefined') return 0;
@@ -58,7 +59,7 @@ export default function ChatWidget() {
     // Guest rate limiting (client-side)
     if (!user) {
       const count = getGuestCount();
-      if (count >= 5) {
+      if (count >= GUEST_MSG_LIMIT) {
         addMessage({
           role: 'assistant',
           content:
@@ -264,7 +265,7 @@ export default function ChatWidget() {
             </p>
             {!user && (
               <p className="text-xs text-gray-400 dark:text-slate-500 mt-2">
-                Guest: {5 - getGuestCount()} messages remaining
+                Guest: {GUEST_MSG_LIMIT - getGuestCount()} messages remaining
               </p>
             )}
             {user && (
@@ -338,15 +339,15 @@ export default function ChatWidget() {
       </div>
 
       {/* Guest limit warning */}
-      {!user && getGuestCount() >= 4 && (
+      {!user && getGuestCount() >= GUEST_MSG_LIMIT - 1 && (
         <div className="px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border-t border-amber-200 dark:border-amber-800 text-xs text-amber-700 dark:text-amber-300 flex items-center gap-2 flex-shrink-0">
           <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
           </svg>
           <span>
-            {5 - getGuestCount() <= 0
+            {GUEST_MSG_LIMIT - getGuestCount() <= 0
               ? 'Message limit reached.'
-              : `${5 - getGuestCount()} guest message${5 - getGuestCount() === 1 ? '' : 's'} left.`}{' '}
+              : `${GUEST_MSG_LIMIT - getGuestCount()} guest message${GUEST_MSG_LIMIT - getGuestCount() === 1 ? '' : 's'} left.`}{' '}
             <button
               onClick={() => router.push('/login')}
               className="underline font-medium hover:text-amber-900"

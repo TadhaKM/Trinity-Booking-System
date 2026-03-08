@@ -18,7 +18,7 @@ export default function DemoBanner() {
       <span className="text-white/90">
         <strong className="text-white font-semibold">Demo Mode</strong>
         {' — '}This is a demonstration of TCD Tickets.
-        {' '}Accounts get <strong>8 AI messages</strong>, <strong>5 bookings</strong>, and <strong>3 events</strong>.
+        {' '}Accounts get <strong>5 AI messages</strong>, <strong>5 bookings</strong>, and <strong>3 events</strong>.
         {' '}Payments use Stripe test mode — <strong>no real charges</strong>.
       </span>
 

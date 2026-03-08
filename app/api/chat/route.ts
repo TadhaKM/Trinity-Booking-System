@@ -16,6 +16,7 @@ import { chatTools, filterToolsByRole } from '@/lib/chat-tools';
 import { buildSystemPrompt, AuthContext } from '@/lib/chat-system-prompt';
 import { rateLimit, getClientIp, rateLimitResponse, LIMITS } from '@/lib/rate-limit';
 import { ChatRequestSchema, zodErrors } from '@/lib/validation';
+import { isAiDisabled, addApiUsage } from '@/lib/demo-spend';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
@@ -33,6 +34,15 @@ export async function POST(request: NextRequest) {
         { error: 'Chat is not configured. Missing ANTHROPIC_API_KEY.' },
         { status: 500 }
       );
+    }
+
+    // ── 1b. Global demo budget check ($25 cap across all users) ──────────────
+    if (await isAiDisabled()) {
+      return NextResponse.json({
+        message:
+          "The AI assistant has been disabled for this demo — the $15 API credit included with the demo has been fully used. All other features of the site still work. Thanks for exploring TCD Tickets!",
+        actions: [],
+      });
     }
 
     // ── 2. Parse & validate input ─────────────────────────────────────────────
@@ -55,7 +65,7 @@ export async function POST(request: NextRequest) {
 
     if (authContext.role === 'guest') {
       authContext.guestMessageCount = userMessageCount;
-      if (userMessageCount > 5) {
+      if (userMessageCount > 2) {
         return NextResponse.json({
           message:
             "You've reached the guest message limit. Please sign in or create an account to continue chatting!",
@@ -64,12 +74,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Demo cap: 8 messages for logged-in users
-    const DEMO_MSG_LIMIT = 8;
+    // Demo cap: 5 messages for logged-in users
+    const DEMO_MSG_LIMIT = 5;
     if (authContext.role !== 'guest' && userMessageCount > DEMO_MSG_LIMIT) {
       return NextResponse.json({
         message:
-          "That's all for the demo version! You've used all 8 AI messages included with this demo account. In the full version, there's no limit — enjoy exploring the rest of the app!",
+          "That's all for the demo version! You've used all 5 AI messages included with this demo account. In the full version, there's no limit — enjoy exploring the rest of the app!",
         actions: [],
       });
     }
@@ -90,6 +100,8 @@ export async function POST(request: NextRequest) {
     let currentMessages = [...claudeMessages];
     let iterations = 0;
     const MAX_ITERATIONS = 3;
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
 
     while (iterations < MAX_ITERATIONS) {
       iterations++;
@@ -101,6 +113,10 @@ export async function POST(request: NextRequest) {
         tools: allowedTools.length > 0 ? allowedTools : undefined,
         messages: currentMessages,
       });
+
+      // Accumulate token usage across all loop iterations
+      totalInputTokens  += response.usage.input_tokens;
+      totalOutputTokens += response.usage.output_tokens;
 
       // Collect text and tool_use blocks
       let hasToolUse = false;
@@ -142,6 +158,9 @@ export async function POST(request: NextRequest) {
         { role: 'user' as const, content: toolResults },
       ];
     }
+
+    // ── 8. Record token usage for demo budget tracking ───────────────────────
+    await addApiUsage(totalInputTokens, totalOutputTokens);
 
     return NextResponse.json({
       message: finalText,
