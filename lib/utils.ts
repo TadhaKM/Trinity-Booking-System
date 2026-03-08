@@ -100,6 +100,66 @@ export function isEventUpcoming(startDate: Date | string): boolean {
   return d > new Date();
 }
 
+/**
+ * Generate an ICS (iCalendar) file string for a single event.
+ */
+export function generateICS(event: {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  startDate: Date | string;
+  endDate: Date | string;
+}): string {
+  const fmt = (d: Date | string) => {
+    const dt = typeof d === 'string' ? new Date(d) : d;
+    return dt.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  };
+  const esc = (s: string) =>
+    s.replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//TCD Tickets//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${event.id}@tcd-tickets`,
+    `DTSTAMP:${fmt(new Date())}`,
+    `DTSTART:${fmt(event.startDate)}`,
+    `DTEND:${fmt(event.endDate)}`,
+    `SUMMARY:${esc(event.title)}`,
+    `DESCRIPTION:${esc(event.description)}`,
+    `LOCATION:${esc(event.location)}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n');
+}
+
+/**
+ * Build a Google Calendar quick-add URL.
+ */
+export function googleCalendarUrl(event: {
+  title: string;
+  description: string;
+  location: string;
+  startDate: Date | string;
+  endDate: Date | string;
+}): string {
+  const fmt = (d: Date | string) => {
+    const dt = typeof d === 'string' ? new Date(d) : d;
+    return dt.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  };
+  const p = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: event.title,
+    details: event.description,
+    location: event.location,
+    dates: `${fmt(event.startDate)}/${fmt(event.endDate)}`,
+  });
+  return `https://calendar.google.com/calendar/render?${p.toString()}`;
+}
+
 export function getEventStatus(
   startDate: Date | string,
   endDate: Date | string

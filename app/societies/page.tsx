@@ -5,6 +5,235 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAuthStore } from '@/lib/auth-store';
 
+// ─── Leaderboard types ────────────────────────────────────────────────────────
+
+interface LeaderboardEntry {
+  id: string;
+  name: string;
+  category: string;
+  imageUrl: string;
+  followerCount: number;
+  ticketsThisMonth: number;
+  isFollowing: boolean;
+}
+
+type LeaderboardTab = 'followers' | 'tickets';
+
+// ─── Rank badge ───────────────────────────────────────────────────────────────
+
+function RankBadge({ rank }: { rank: number }) {
+  const styles: Record<number, string> = {
+    1: 'bg-amber-400 text-amber-900 shadow-amber-200 shadow-md',
+    2: 'bg-slate-300 text-slate-700 shadow-slate-100 shadow-md',
+    3: 'bg-orange-300 text-orange-800 shadow-orange-100 shadow-md',
+  };
+  const base = 'flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black';
+  return (
+    <span className={`${base} ${styles[rank] ?? 'bg-slate-100 text-slate-400'}`}>
+      {rank}
+    </span>
+  );
+}
+
+// ─── Leaderboard skeleton ─────────────────────────────────────────────────────
+
+function LeaderboardSkeleton() {
+  return (
+    <div className="space-y-3">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div key={i} className="flex items-center gap-3 bg-white rounded-2xl p-4 animate-pulse">
+          <div className="w-7 h-7 rounded-full bg-slate-200 flex-shrink-0" />
+          <div className="w-12 h-12 rounded-full bg-slate-200 flex-shrink-0" />
+          <div className="flex-1 space-y-2">
+            <div className="h-3.5 bg-slate-200 rounded-full w-2/3" />
+            <div className="h-3 bg-slate-100 rounded-full w-1/3" />
+          </div>
+          <div className="h-3 bg-slate-200 rounded-full w-16" />
+          <div className="h-8 bg-slate-100 rounded-full w-20" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Leaderboard section ──────────────────────────────────────────────────────
+
+interface TrendingSocietiesProps {
+  user: { id: string; name: string; email: string; isOrganiser: boolean } | null;
+  mainSocieties: SocietyWithContent[];
+  onFollowToggle: (id: string) => void;
+}
+
+function TrendingSocieties({ user, mainSocieties, onFollowToggle }: TrendingSocietiesProps) {
+  const [tab, setTab] = useState<LeaderboardTab>('followers');
+  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [followLoading, setFollowLoading] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    const url = user
+      ? `/api/societies/leaderboard?tab=${tab}&userId=${user.id}`
+      : `/api/societies/leaderboard?tab=${tab}`;
+    fetch(url)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled) setEntries(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setEntries([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [tab, user]);
+
+  // Sync isFollowing state with main societies list so optimistic updates propagate
+  const syncedEntries = useMemo(() => {
+    return entries.map((e) => {
+      const match = mainSocieties.find((s) => s.id === e.id);
+      return match ? { ...e, isFollowing: match.isFollowing } : e;
+    });
+  }, [entries, mainSocieties]);
+
+  const handleFollow = async (societyId: string) => {
+    if (!user || followLoading) return;
+    setFollowLoading(societyId);
+    onFollowToggle(societyId);
+    setEntries((prev) =>
+      prev.map((e) =>
+        e.id === societyId
+          ? { ...e, isFollowing: !e.isFollowing, followerCount: e.isFollowing ? e.followerCount - 1 : e.followerCount + 1 }
+          : e
+      )
+    );
+    try {
+      await fetch(`/api/societies/${societyId}/follow`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
+    } catch {
+      // Revert on error
+      onFollowToggle(societyId);
+      setEntries((prev) =>
+        prev.map((e) =>
+          e.id === societyId
+            ? { ...e, isFollowing: !e.isFollowing, followerCount: e.isFollowing ? e.followerCount - 1 : e.followerCount + 1 }
+            : e
+        )
+      );
+    } finally {
+      setFollowLoading(null);
+    }
+  };
+
+  return (
+    <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-2">
+      {/* Heading + tab switcher */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+        <h2 className="text-xl font-bold text-[#0A2E6E] mb-4 sm:mb-0">Trending Societies</h2>
+        <div className="flex gap-1 bg-slate-100 rounded-full p-1 self-start sm:self-auto">
+          <button
+            onClick={() => setTab('followers')}
+            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
+              tab === 'followers'
+                ? 'bg-white text-[#0A2E6E] shadow-sm'
+                : 'text-slate-500 hover:text-[#0A2E6E]'
+            }`}
+          >
+            Most Followed
+          </button>
+          <button
+            onClick={() => setTab('tickets')}
+            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
+              tab === 'tickets'
+                ? 'bg-white text-[#0A2E6E] shadow-sm'
+                : 'text-slate-500 hover:text-[#0A2E6E]'
+            }`}
+          >
+            Top This Month
+          </button>
+        </div>
+      </div>
+
+      {/* Cards */}
+      {loading ? (
+        <LeaderboardSkeleton />
+      ) : syncedEntries.length === 0 ? (
+        <div className="bg-white rounded-2xl px-6 py-8 text-center text-slate-400 text-sm">
+          No data available yet.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {syncedEntries.map((entry, i) => {
+            const rank = i + 1;
+            const stat =
+              tab === 'followers'
+                ? `${entry.followerCount.toLocaleString()} follower${entry.followerCount !== 1 ? 's' : ''}`
+                : `${entry.ticketsThisMonth.toLocaleString()} ticket${entry.ticketsThisMonth !== 1 ? 's' : ''} this month`;
+
+            return (
+              <div
+                key={entry.id}
+                className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3 border border-slate-100 hover:border-[#0A2E6E]/15 hover:shadow-md transition-all duration-200"
+              >
+                <RankBadge rank={rank} />
+
+                {/* Society image */}
+                <div className="flex-shrink-0 relative w-12 h-12 rounded-full overflow-hidden border-2 border-slate-100">
+                  <Image
+                    src={entry.imageUrl}
+                    alt={entry.name}
+                    fill
+                    className="object-cover"
+                    sizes="48px"
+                  />
+                </div>
+
+                {/* Name + category */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-[#0A2E6E] truncate">{entry.name}</p>
+                  <p className="text-xs text-slate-400 font-medium truncate">{entry.category}</p>
+                </div>
+
+                {/* Stat */}
+                <p className="hidden sm:block text-xs font-semibold text-slate-500 whitespace-nowrap">
+                  {stat}
+                </p>
+
+                {/* Follow button */}
+                {user ? (
+                  <button
+                    onClick={() => handleFollow(entry.id)}
+                    disabled={followLoading === entry.id}
+                    className={`flex-shrink-0 text-xs font-bold px-4 py-2 rounded-full border-2 transition-all duration-300 ${
+                      entry.isFollowing
+                        ? 'border-slate-200 text-slate-500 hover:border-red-200 hover:text-red-500 hover:bg-red-50'
+                        : 'border-[#0A2E6E] text-[#0A2E6E] hover:bg-[#0A2E6E] hover:text-white'
+                    }`}
+                  >
+                    {followLoading === entry.id ? '...' : entry.isFollowing ? 'Following' : 'Follow'}
+                  </button>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="flex-shrink-0 text-xs font-bold px-4 py-2 rounded-full border-2 border-slate-200 text-slate-400 hover:border-slate-300 hover:bg-slate-50 transition-all duration-300"
+                  >
+                    Follow
+                  </Link>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
 interface FeaturedPost {
   id: string;
   imageUrl: string;
@@ -145,6 +374,9 @@ export default function SocietiesPage() {
           ))}
         </div>
       </div>
+
+      {/* ─── TRENDING LEADERBOARD ────────────────── */}
+      <TrendingSocieties user={user} mainSocieties={societies} onFollowToggle={handleFollow} />
 
       {/* ─── SOCIETIES GRID ──────────────────────── */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">

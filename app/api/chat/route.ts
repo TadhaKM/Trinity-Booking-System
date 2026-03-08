@@ -427,7 +427,7 @@ async function executeServerTool(
     case 'navigate': {
       return {
         data: { status: 'ok', navigatingTo: input.path },
-        clientAction: { type: 'NAVIGATE', payload: { path: input.path } },
+        clientAction: { type: 'NAVIGATE', payload: { path: input.path, label: input.label } },
       };
     }
 

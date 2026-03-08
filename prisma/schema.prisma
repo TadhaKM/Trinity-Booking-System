@@ -18,15 +18,22 @@ model User {
   password         String   @default("")
   isOrganiser      Boolean  @default(false)
   isAdmin          Boolean  @default(false)
+  isBanned         Boolean  @default(false)
   profilePicture   String?
-  stripeConnectId  String?  // Stripe Connect Express account ID
-  payoutsEnabled   Boolean  @default(false) // true once Stripe onboarding complete
+  stripeConnectId  String?
+  payoutsEnabled   Boolean  @default(false)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  orders    Order[]
-  following SocietyFollower[]
-  postLikes PostLike[]
+  orders            Order[]
+  following         SocietyFollower[]
+  postLikes         PostLike[]
+  notifications     Notification[]
+  waitlistEntries   WaitlistEntry[]
+  savedEvents       SavedEvent[]
+  comments          EventComment[]
+  refundRequests    RefundRequest[]
+  pushSubscriptions PushSubscription[]
 }
 
 model Society {
@@ -67,15 +74,25 @@ model Event {
   locationCoords String   // JSON string: { lat, lng }
   category       String
   imageUrl       String
+  galleryImages  String?  // JSON array of additional image URLs
   tags           String   // JSON string: string[]
   organiserId    String
+  policy         String?  // Refund/transfer policy text
+  faqJson        String?  // JSON string: [{q, a}]
+  venueCapacity  Int?     // Maximum attendees across all ticket types
+  isPublished    Boolean  @default(true)
+  isCancelled    Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  society      Society       @relation(fields: [societyId], references: [id], onDelete: Cascade)
-  ticketTypes  TicketType[]
-  orders       Order[]
-  societyPosts SocietyPost[]
+  society         Society         @relation(fields: [societyId], references: [id], onDelete: Cascade)
+  ticketTypes     TicketType[]
+  orders          Order[]
+  societyPosts    SocietyPost[]
+  waitlistEntries WaitlistEntry[]
+  savedBy         SavedEvent[]
+  checkInLogs     CheckInLog[]
+  comments        EventComment[]
 }
 
 model TicketType {
@@ -87,8 +104,9 @@ model TicketType {
   available Int
   createdAt DateTime @default(now())
 
-  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  tickets Ticket[]
+  event           Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tickets         Ticket[]
+  waitlistEntries WaitlistEntry[]
 }
 
 model Coupon {
@@ -102,16 +120,18 @@ model Coupon {
 }
 
 model Order {
-  id          String   @id @default(cuid())
-  userId      String
-  eventId     String
-  totalAmount Float
-  status      String   @default("CONFIRMED")
-  createdAt   DateTime @default(now())
+  id                    String    @id @default(cuid())
+  userId                String
+  eventId               String
+  totalAmount           Float
+  status                String    @default("CONFIRMED") // CONFIRMED | CANCELLED | REFUNDED | PARTIALLY_REFUNDED
+  stripePaymentIntentId String?
+  createdAt             DateTime  @default(now())
 
-  user    User     @relation(fields: [userId], references: [id])
-  event   Event    @relation(fields: [eventId], references: [id])
-  tickets Ticket[]
+  user           User            @relation(fields: [userId], references: [id])
+  event          Event           @relation(fields: [eventId], references: [id])
+  tickets        Ticket[]
+  refundRequests RefundRequest[]
 }
 
 model Ticket {
@@ -121,10 +141,14 @@ model Ticket {
   price        Float
   qrCode       String    @unique
   checkedInAt  DateTime?
+  isRefunded   Boolean   @default(false)
+  refundedAt   DateTime?
   createdAt    DateTime  @default(now())
 
-  order      Order      @relation(fields: [orderId], references: [id])
-  ticketType TicketType @relation(fields: [ticketTypeId], references: [id])
+  order          Order          @relation(fields: [orderId], references: [id])
+  ticketType     TicketType     @relation(fields: [ticketTypeId], references: [id])
+  checkInLog     CheckInLog?
+  refundRequest  RefundRequest?
 }
 
 model SocietyPost {
@@ -143,11 +167,9 @@ model SocietyPost {
 }
 
 // ── Stripe Connect Demo ──────────────────────────────────────────────────────
-// Stores connected accounts created via the demo integration.
-// In a real integration, link stripeAccountId to your User model instead.
 model ConnectDemoAccount {
   id              String   @id @default(cuid())
-  stripeAccountId String   @unique  // The Stripe acct_xxx ID
+  stripeAccountId String   @unique
   displayName     String
   email           String
   createdAt       DateTime @default(now())
@@ -163,4 +185,121 @@ model PostLike {
   post SocietyPost @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
+}
+
+// ── Phase 1 models ───────────────────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // BOOKING_CONFIRMED | TICKET_RECEIVED | EVENT_REMINDER | NEW_EVENT | EVENT_UPDATED | EVENT_CANCELLED | WAITLIST_PROMOTED | LOW_AVAILABILITY | REFUND_PROCESSED
+  title     String
+  body      String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model WaitlistEntry {
+  id           String   @id @default(cuid())
+  userId       String
+  ticketTypeId String
+  eventId      String
+  position     Int
+  notified     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ticketType TicketType @relation(fields: [ticketTypeId], references: [id], onDelete: Cascade)
+  event      Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, ticketTypeId])
+}
+
+model SavedEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  eventId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+}
+
+model CheckInLog {
+  id        String   @id @default(cuid())
+  ticketId  String   @unique
+  eventId   String
+  scannedBy String   // organiserId
+  scannedAt DateTime @default(now())
+
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+  event  Event  @relation(fields: [eventId], references: [id])
+}
+
+// ── Phase 2 models ───────────────────────────────────────────────────────────
+
+model RefundRequest {
+  id             String    @id @default(cuid())
+  orderId        String
+  ticketId       String?   @unique // null = full order refund, set = single-ticket refund
+  userId         String
+  reason         String
+  status         String    @default("PENDING") // PENDING | APPROVED | REJECTED | PROCESSED
+  amount         Float     // requested refund amount
+  stripeRefundId String?
+  reviewedBy     String?   // adminId
+  reviewNote     String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  order  Order   @relation(fields: [orderId], references: [id])
+  ticket Ticket? @relation(fields: [ticketId], references: [id])
+  user   User    @relation(fields: [userId], references: [id])
+}
+
+model EventComment {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  parentId  String?  // null = top-level, set = reply
+  body      String
+  isHidden  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event   Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent  EventComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies EventComment[] @relation("CommentReplies")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String   // userId who performed the action
+  action     String   // BAN_USER | UNBAN_USER | DELETE_EVENT | HIDE_COMMENT | APPROVE_REFUND | REJECT_REFUND | PROCESS_REFUND
+  entityType String   // user | event | comment | refund | order
+  entityId   String
+  details    String?  // JSON: extra context
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([entityType, entityId])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

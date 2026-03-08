@@ -1,0 +1,98 @@
+{
+  "name": "TCD Tickets",
+  "short_name": "TCD Tickets",
+  "description": "Book and manage event tickets for Trinity College Dublin societies and clubs",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#EFF2F7",
+  "theme_color": "#0A2E6E",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/home.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Home — browse upcoming events"
+    },
+    {
+      "src": "/screenshots/event.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Event detail and booking"
+    }
+  ],
+  "categories": ["entertainment", "lifestyle", "education"],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Browse Events",
+      "short_name": "Events",
+      "url": "/search",
+      "description": "Discover upcoming TCD events"
+    },
+    {
+      "name": "My Tickets",
+      "short_name": "Tickets",
+      "url": "/tickets",
+      "description": "View your purchased tickets"
+    },
+    {
+      "name": "Saved Events",
+      "short_name": "Saved",
+      "url": "/saved",
+      "description": "Your bookmarked events"
+    }
+  ]
+}

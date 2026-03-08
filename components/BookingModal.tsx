@@ -14,7 +14,7 @@ type ModalView = 'details' | 'tickets' | 'auth' | 'guest-form' | 'checkout' | 'p
 const _stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise =
   _stripeKey && _stripeKey !== 'YOUR_STRIPE_PUBLISHABLE_KEY'
-    ? loadStripe(_stripeKey).catch(() => null)
+    ? loadStripe(_stripeKey, { developerTools: { assistant: { enabled: false } } }).catch(() => null)
     : null;
 
 interface GuestInfo {

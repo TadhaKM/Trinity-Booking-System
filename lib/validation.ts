@@ -70,13 +70,14 @@ export const CreateEventSchema = z.object({
   endDate: z.string().optional(),
   location: nonEmptyString('Location', 300),
   category: z.string().trim().max(100).optional(),
-  imageUrl: z.string().max(2048).optional(),
+  imageUrl: z.string().max(8_000_000).optional(), // allow base64 data URIs (~6MB image)
   tags: z.array(z.string().trim().max(50)).max(20).optional(),
   ticketTypes: z
     .array(TicketTypeSchema)
     .min(1, 'At least one ticket type is required')
     .max(20, 'Too many ticket types'),
   organiserId: cuid,
+  venueCapacity: z.number().int().min(1).max(100_000).optional().nullable(),
 });
 
 export const UpdateEventSchema = CreateEventSchema.extend({
@@ -155,6 +156,50 @@ export const PinPostSchema = z.object({
 
 export const LikePostSchema = z.object({
   userId: cuid,
+});
+
+// ─── Refund schemas ───────────────────────────────────────────────────────────
+
+export const CreateRefundRequestSchema = z.object({
+  userId: cuid,
+  orderId: cuid,
+  ticketId: cuid.optional(), // omit for full-order refund
+  reason: z.string().trim().min(10, 'Please provide a reason (at least 10 characters)').max(500),
+});
+
+export const ReviewRefundSchema = z.object({
+  adminId: cuid,
+  action: z.enum(['APPROVE', 'REJECT']),
+  reviewNote: z.string().trim().max(500).optional(),
+});
+
+// ─── Comment schemas ──────────────────────────────────────────────────────────
+
+export const CreateCommentSchema = z.object({
+  userId: cuid,
+  body: z.string().trim().min(1, 'Comment cannot be empty').max(2000),
+  parentId: cuid.optional(),
+});
+
+export const UpdateCommentSchema = z.object({
+  userId: cuid,
+  isHidden: z.boolean().optional(),
+  body: z.string().trim().min(1).max(2000).optional(),
+});
+
+// ─── Venue capacity schema ────────────────────────────────────────────────────
+
+export const VenueCapacitySchema = z.object({
+  venueCapacity: z.number().int().min(1).max(100_000).optional().nullable(),
+});
+
+// ─── Push subscription schema ─────────────────────────────────────────────────
+
+export const PushSubscribeSchema = z.object({
+  userId: cuid,
+  endpoint: z.string().min(1).max(2048).regex(/^https:\/\//, 'Endpoint must be an HTTPS URL'),
+  p256dh: z.string().min(1).max(200),
+  auth: z.string().min(1).max(100),
 });
 
 // ─── Helper ───────────────────────────────────────────────────────────────────

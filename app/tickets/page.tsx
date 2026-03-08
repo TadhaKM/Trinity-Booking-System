@@ -6,14 +6,30 @@ import Link from 'next/link';
 import Image from 'next/image';
 import QRCode from 'qrcode';
 import { useAuthStore } from '@/lib/auth-store';
-import { Order } from '@/lib/types';
+import { Order, Ticket } from '@/lib/types';
 import { formatDate, formatPrice } from '@/lib/utils';
 import SendTicketModal from '@/components/SendTicketModal';
+import RefundModal from '@/components/RefundModal';
 
 interface SendTarget {
   ticketId: string;
   ticketName: string;
   eventTitle: string;
+}
+
+/** Returns true if the event has already happened (startDate is in the past). */
+function eventHasPassed(startDate: Date | string | undefined): boolean {
+  if (!startDate) return false;
+  return new Date(startDate) < new Date();
+}
+
+/** Returns true if the ticket is eligible for a refund request. */
+function canRequestRefund(order: Order, ticket: Ticket): boolean {
+  return (
+    order.status === 'CONFIRMED' &&
+    ticket.isRefunded !== true &&
+    !eventHasPassed(order.event?.startDate)
+  );
 }
 
 export default function MyTicketsPage() {
@@ -22,7 +38,16 @@ export default function MyTicketsPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
+
+  // Send-ticket modal state
   const [sendTarget, setSendTarget] = useState<SendTarget | null>(null);
+
+  // Refund modal state
+  const [refundingOrder, setRefundingOrder] = useState<Order | null>(null);
+  const [refundingTicketId, setRefundingTicketId] = useState<string | null>(null);
+
+  // Track locally which tickets have had a refund requested this session
+  const [refundRequestedIds, setRefundRequestedIds] = useState<Set<string>>(new Set());
 
   const fetchTickets = useCallback(async () => {
     if (!user) return;
@@ -30,14 +55,15 @@ export default function MyTicketsPage() {
       const res = await fetch(`/api/users/${user.id}/tickets`);
       const data = await res.json();
       const fetched: Order[] = Array.isArray(data) ? data : [];
-      // Only show non-cancelled orders
-      const active = fetched.filter((o) => o.status !== 'CANCELLED');
-      setOrders(active);
+      // Keep all orders (including cancelled/refunded so users can see history)
+      setOrders(fetched);
 
       const qrMap: Record<string, string> = {};
-      for (const order of active) {
+      for (const order of fetched) {
         for (const ticket of order.tickets) {
-          qrMap[ticket.id] = await QRCode.toDataURL(ticket.qrCode);
+          if (ticket.qrCode) {
+            qrMap[ticket.id] = await QRCode.toDataURL(ticket.qrCode);
+          }
         }
       }
       setQrCodes(qrMap);
@@ -53,6 +79,38 @@ export default function MyTicketsPage() {
     fetchTickets();
   }, [user, router, fetchTickets]);
 
+  // Status badge for the order header
+  function OrderStatusBadge({ status }: { status: Order['status'] }) {
+    if (status === 'CONFIRMED') {
+      return (
+        <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 flex-shrink-0">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+          CONFIRMED
+        </span>
+      );
+    }
+    if (status === 'REFUNDED' || status === 'PARTIALLY_REFUNDED') {
+      return (
+        <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 flex-shrink-0">
+          {status === 'PARTIALLY_REFUNDED' ? 'PARTIALLY REFUNDED' : 'REFUNDED'}
+        </span>
+      );
+    }
+    if (status === 'CANCELLED') {
+      return (
+        <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500 flex-shrink-0">
+          CANCELLED
+        </span>
+      );
+    }
+    // PENDING or anything else
+    return (
+      <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 flex-shrink-0">
+        {status}
+      </span>
+    );
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#EFF2F7]">
@@ -60,6 +118,9 @@ export default function MyTicketsPage() {
       </div>
     );
   }
+
+  // Filter to non-cancelled for the count in the header, but show all
+  const activeOrders = orders.filter((o) => o.status !== 'CANCELLED');
 
   if (orders.length === 0) {
     return (
@@ -87,7 +148,9 @@ export default function MyTicketsPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-black text-[#0A2E6E] tracking-tight">My Tickets</h1>
-          <p className="text-slate-500 mt-1">{orders.length} active {orders.length === 1 ? 'order' : 'orders'}</p>
+          <p className="text-slate-500 mt-1">
+            {activeOrders.length} active {activeOrders.length === 1 ? 'order' : 'orders'}
+          </p>
         </div>
 
         <div className="space-y-6">
@@ -133,15 +196,7 @@ export default function MyTicketsPage() {
                         </>
                       )}
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold flex-shrink-0 ${
-                      order.status === 'CONFIRMED'
-                        ? 'bg-green-100 text-green-700'
-                        : order.status === 'PENDING'
-                        ? 'bg-amber-100 text-amber-700'
-                        : 'bg-red-100 text-red-700'
-                    }`}>
-                      {order.status}
-                    </span>
+                    <OrderStatusBadge status={order.status} />
                   </div>
 
                   <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
@@ -163,51 +218,119 @@ export default function MyTicketsPage() {
                     {order.tickets.length} {order.tickets.length === 1 ? 'Ticket' : 'Tickets'}
                   </p>
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {order.tickets.map((ticket) => (
-                      <div
-                        key={ticket.id}
-                        className="bg-[#EFF2F7] rounded-2xl p-4 flex flex-col gap-3"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-bold text-[#0A2E6E] text-sm">
-                              {ticket.ticketType?.name || 'Ticket'}
-                            </p>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                              {ticket.price === 0 ? 'Free' : formatPrice(ticket.price)}
-                            </p>
-                          </div>
-                          {/* Send button */}
-                          <button
-                            onClick={() => setSendTarget({
-                              ticketId: ticket.id,
-                              ticketName: ticket.ticketType?.name || 'Ticket',
-                              eventTitle: order.event?.title || 'Event',
-                            })}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0569b9]/10 hover:bg-[#0569b9]/20 text-[#0569b9] text-xs font-bold rounded-xl transition-colors"
-                            title="Send to a friend"
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                            </svg>
-                            Send
-                          </button>
-                        </div>
+                    {order.tickets.map((ticket) => {
+                      const isRefunded = ticket.isRefunded === true;
+                      const refundRequested = refundRequestedIds.has(ticket.id);
 
-                        {qrCodes[ticket.id] && (
-                          <div className="bg-white rounded-xl p-2.5 border border-slate-200/50">
-                            <img
-                              src={qrCodes[ticket.id]}
-                              alt="QR Code"
-                              className="w-full rounded-lg"
-                            />
-                            <p className="text-center text-[10px] text-slate-400 mt-2 font-mono break-all">
-                              {ticket.qrCode}
-                            </p>
+                      return (
+                        <div
+                          key={ticket.id}
+                          className={`relative rounded-2xl p-4 flex flex-col gap-3 overflow-hidden ${
+                            isRefunded ? 'bg-slate-100' : 'bg-[#EFF2F7]'
+                          }`}
+                        >
+                          {/* Refunded banner */}
+                          {isRefunded && (
+                            <div className="absolute inset-x-0 top-0 bg-slate-400/90 text-white text-[10px] font-black uppercase tracking-widest text-center py-1 z-10">
+                              Refunded
+                            </div>
+                          )}
+
+                          <div className={`flex items-center justify-between ${isRefunded ? 'mt-5' : ''}`}>
+                            <div>
+                              <p className={`font-bold text-sm ${isRefunded ? 'text-slate-400' : 'text-[#0A2E6E]'}`}>
+                                {ticket.ticketType?.name || 'Ticket'}
+                              </p>
+                              <p className="text-xs text-slate-500 mt-0.5">
+                                {ticket.price === 0 ? 'Free' : formatPrice(ticket.price)}
+                              </p>
+                            </div>
+
+                            {/* Send button — hidden for refunded tickets */}
+                            {!isRefunded && (
+                              <button
+                                onClick={() => setSendTarget({
+                                  ticketId: ticket.id,
+                                  ticketName: ticket.ticketType?.name || 'Ticket',
+                                  eventTitle: order.event?.title || 'Event',
+                                })}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0569b9]/10 hover:bg-[#0569b9]/20 text-[#0569b9] text-xs font-bold rounded-xl transition-colors"
+                                title="Send to a friend"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                </svg>
+                                Send
+                              </button>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    ))}
+
+                          {/* QR code — with red X overlay when refunded */}
+                          {qrCodes[ticket.id] && (
+                            <div className={`relative rounded-xl p-2.5 border ${
+                              isRefunded
+                                ? 'bg-slate-200 border-slate-300/50'
+                                : 'bg-white border-slate-200/50'
+                            }`}>
+                              <img
+                                src={qrCodes[ticket.id]}
+                                alt="QR Code"
+                                className={`w-full rounded-lg ${isRefunded ? 'opacity-30 grayscale' : ''}`}
+                              />
+                              {/* Red X strikethrough overlay for refunded tickets */}
+                              {isRefunded && (
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                  <svg
+                                    className="w-3/4 h-3/4 text-red-500/80"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth={1.5}
+                                  >
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </div>
+                              )}
+                              <p className="text-center text-[10px] text-slate-400 mt-2 font-mono break-all">
+                                {ticket.qrCode}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Action row: View Ticket pill + Refund button */}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {/* View Ticket — digital wallet link */}
+                            {!isRefunded && (
+                              <a
+                                href={`/tickets/${ticket.id}/card`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-[#0A2E6E]/10 text-[#0A2E6E] text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-[#0A2E6E]/20 transition-colors"
+                              >
+                                View Ticket
+                              </a>
+                            )}
+
+                            {/* Refund request button / badge */}
+                            {isRefunded || refundRequested ? (
+                              <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-red-100 text-red-600">
+                                {isRefunded ? 'Refunded' : 'Refund requested'}
+                              </span>
+                            ) : canRequestRefund(order, ticket) ? (
+                              <button
+                                onClick={() => {
+                                  setRefundingOrder(order);
+                                  setRefundingTicketId(ticket.id);
+                                }}
+                                className="text-xs font-semibold px-3 py-1.5 rounded-full border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
+                              >
+                                Request Refund
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -227,6 +350,37 @@ export default function MyTicketsPage() {
           onSuccess={() => {
             setSendTarget(null);
             setLoading(true);
+            fetchTickets();
+          }}
+        />
+      )}
+
+      {/* Refund Modal */}
+      {refundingOrder && (
+        <RefundModal
+          order={refundingOrder as any}
+          tickets={refundingOrder.tickets as any}
+          onClose={() => {
+            setRefundingOrder(null);
+            setRefundingTicketId(null);
+          }}
+          onSuccess={(ticketId?: string) => {
+            // Mark the specific ticket (or all tickets in the order) as refund-requested
+            setRefundRequestedIds((prev) => {
+              const next = new Set(prev);
+              if (ticketId) {
+                next.add(ticketId);
+              } else {
+                // If the modal doesn't return a specific id, mark all non-refunded tickets
+                refundingOrder.tickets.forEach((t) => {
+                  if (!t.isRefunded) next.add(t.id);
+                });
+              }
+              return next;
+            });
+            setRefundingOrder(null);
+            setRefundingTicketId(null);
+            // Re-fetch to pick up any server-side status updates
             fetchTickets();
           }}
         />

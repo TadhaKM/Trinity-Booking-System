@@ -30,7 +30,7 @@ export default function ImageUpload({
 
       const maxBytes = maxSizeMB * 1024 * 1024;
       if (file.size > maxBytes) {
-        setError(`File is too large. Maximum size is ${maxSizeMB}MB.`);
+        setError(`Picture file size too large — please use an image under ${maxSizeMB}MB.`);
         return;
       }
 

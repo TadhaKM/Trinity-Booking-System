@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/auth-store';
 import { getInitials } from '@/lib/utils';
 import { useState, useEffect, useRef } from 'react';
+import NotificationBell from '@/components/NotificationBell';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -70,6 +71,7 @@ export default function Navbar() {
 
   if (user) {
     navItems.push({ href: '/tickets', label: 'My Tickets' });
+    navItems.push({ href: '/saved', label: 'Saved' });
     if (user.isOrganiser) navItems.push({ href: '/organiser/dashboard', label: 'Organiser' });
     if (user.isAdmin) navItems.push({ href: '/admin', label: 'Admin' });
   }
@@ -120,6 +122,9 @@ export default function Navbar() {
 
             {/* Right Side */}
             <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Notification Bell (logged-in only) */}
+              {user && <NotificationBell />}
+
               {user ? (
                 /* ── Profile dropdown ── */
                 <div className="relative" ref={profileRef}>
@@ -177,6 +182,13 @@ export default function Navbar() {
                         >
                           <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" /></svg>
                           My Tickets
+                        </Link>
+                        <Link
+                          href="/saved"
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-[#EFF2F7] hover:text-[#0569b9] transition-colors"
+                        >
+                          <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
+                          Saved Events
                         </Link>
                         {user.isOrganiser && (
                           <Link
@@ -290,6 +302,9 @@ export default function Navbar() {
                 <div className="mt-3 pt-3 border-t border-white/20 space-y-1">
                   <Link href="/profile" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white/80 hover:bg-white/15 hover:text-white transition">
                     Profile
+                  </Link>
+                  <Link href="/saved" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white/80 hover:bg-white/15 hover:text-white transition">
+                    Saved Events
                   </Link>
                   <button onClick={handleLogout} className="w-full text-left flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-red-300 hover:bg-white/10 transition">
                     Log out

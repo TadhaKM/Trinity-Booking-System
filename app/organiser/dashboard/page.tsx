@@ -10,8 +10,10 @@ import { formatPrice } from '@/lib/utils';
 interface DashboardStats {
   totalRevenue: number;
   totalTicketsSold: number;
+  totalCheckedIn: number;
   upcomingEvents: number;
   totalEvents: number;
+  noShowRate: number;
 }
 
 interface EventStats {
@@ -19,8 +21,16 @@ interface EventStats {
   title: string;
   startDate: string;
   ticketsSold: number;
+  soldTickets: number;
   revenue: number;
   capacity: number;
+  checkedIn: number;
+  noShowRate: number;
+}
+
+interface DailyRevenue {
+  date: string;
+  revenue: number;
 }
 
 interface Society {
@@ -40,6 +50,37 @@ interface Post {
   createdAt: string;
 }
 
+/** Simple SVG bar chart for daily revenue */
+function RevenueChart({ data }: { data: { date: string; revenue: number }[] }) {
+  const max = Math.max(...data.map((d) => d.revenue), 1);
+  const barW = 100 / data.length;
+  return (
+    <div className="w-full overflow-hidden">
+      <svg viewBox={`0 0 ${data.length * 12} 60`} className="w-full" preserveAspectRatio="none" style={{ height: 80 }}>
+        {data.map((d, i) => {
+          const h = Math.max((d.revenue / max) * 50, d.revenue > 0 ? 2 : 0);
+          return (
+            <rect
+              key={d.date}
+              x={i * 12 + 1}
+              y={60 - h}
+              width={10}
+              height={h}
+              rx={2}
+              className={d.revenue > 0 ? 'fill-[#0569b9]' : 'fill-gray-100'}
+            />
+          );
+        })}
+      </svg>
+      <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+        <span>{data[0]?.date?.slice(5)}</span>
+        <span>{data[Math.floor(data.length / 2)]?.date?.slice(5)}</span>
+        <span>{data[data.length - 1]?.date?.slice(5)}</span>
+      </div>
+    </div>
+  );
+}
+
 function OrganiserDashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -49,6 +90,7 @@ function OrganiserDashboardContent() {
   // Events state
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [eventStats, setEventStats] = useState<EventStats[]>([]);
+  const [dailyRevenue, setDailyRevenue] = useState<DailyRevenue[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -127,10 +169,12 @@ function OrganiserDashboardContent() {
 
     const fetchDashboard = async () => {
       try {
-        const res = await fetch(`/api/organiser/${user.id}/dashboard`);
+        const res = await fetch(`/api/organiser/${user.id}/analytics`);
+        if (!res.ok) throw new Error(`Analytics API ${res.status}`);
         const data = await res.json();
         setStats(data.stats);
-        setEventStats(data.events);
+        setEventStats(data.events ?? []);
+        setDailyRevenue(data.dailyRevenue ?? []);
       } catch (error) {
         console.error('Error fetching dashboard:', error);
       } finally {
@@ -322,38 +366,54 @@ function OrganiserDashboardContent() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-wrap justify-between items-start gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2 text-black">Organiser Dashboard</h1>
-          <p className="text-black">Manage your events and society posts</p>
+          <h1 className="text-3xl font-bold mb-1 text-[#0A2E6E]">Organiser Dashboard</h1>
+          <p className="text-gray-500 text-sm">Manage your events, posts, and door scanning</p>
         </div>
-        <Link
-          href="/organiser/create-event"
-          className="bg-[#0d3b66] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#0a2f52] transition"
-        >
-          Create Event
-        </Link>
+        <div className="flex gap-3 flex-wrap">
+          <Link
+            href="/organiser/checkin"
+            className="flex items-center gap-2 bg-white border border-gray-200 text-[#0A2E6E] px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition shadow-sm"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 3.5V16a2 2 0 00-2-2h-4a2 2 0 00-2 2v.5" />
+            </svg>
+            Check-In Scanner
+          </Link>
+          <Link
+            href="/organiser/create-event"
+            className="bg-[#0569b9] text-white px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-[#0A2E6E] transition shadow-sm"
+          >
+            + Create Event
+          </Link>
+        </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
         {[
-          { label: 'Total Revenue', value: formatPrice(stats.totalRevenue), color: 'text-green-500', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-          { label: 'Tickets Sold', value: stats.totalTicketsSold, color: 'text-blue-500', icon: 'M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z' },
-          { label: 'Upcoming Events', value: stats.upcomingEvents, color: 'text-purple-500', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
-          { label: 'Total Events', value: stats.totalEvents, color: 'text-orange-500', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
+          { label: 'Total Revenue', value: formatPrice(stats.totalRevenue), bg: 'bg-green-50', text: 'text-green-600' },
+          { label: 'Tickets Sold', value: stats.totalTicketsSold, bg: 'bg-blue-50', text: 'text-blue-600' },
+          { label: 'Checked In', value: stats.totalCheckedIn ?? 0, bg: 'bg-purple-50', text: 'text-purple-600' },
+          { label: 'No-Show Rate', value: `${stats.noShowRate ?? 0}%`, bg: 'bg-orange-50', text: 'text-orange-600' },
+          { label: 'Upcoming', value: stats.upcomingEvents, bg: 'bg-indigo-50', text: 'text-indigo-600' },
+          { label: 'Total Events', value: stats.totalEvents, bg: 'bg-gray-50', text: 'text-gray-600' },
         ].map((stat) => (
-          <div key={stat.label} className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-black">{stat.label}</h3>
-              <svg className={`w-8 h-8 ${stat.color}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={stat.icon} />
-              </svg>
-            </div>
-            <p className="text-3xl font-bold text-black">{stat.value}</p>
+          <div key={stat.label} className={`${stat.bg} rounded-2xl p-4`}>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{stat.label}</p>
+            <p className={`text-2xl font-extrabold ${stat.text}`}>{stat.value}</p>
           </div>
         ))}
       </div>
+
+      {/* Revenue Chart */}
+      {dailyRevenue.length > 0 && (
+        <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 mb-6">
+          <h2 className="text-base font-bold text-[#0A2E6E] mb-4">Revenue — Last 30 Days</h2>
+          <RevenueChart data={dailyRevenue} />
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="border-b border-gray-200 mb-6">
@@ -396,45 +456,50 @@ function OrganiserDashboardContent() {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    {['Event Name', 'Date', 'Tickets Sold', 'Capacity', 'Revenue', 'Fill Rate', 'Actions'].map((h) => (
-                      <th key={h} className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">{h}</th>
+                    {['Event Name', 'Date', 'Sold', 'Checked In', 'Revenue', 'Fill Rate', 'Actions'].map((h) => (
+                      <th key={h} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {eventStats.map((event) => {
-                    const fillRate = (event.ticketsSold / event.capacity) * 100;
+                    const soldTickets = event.soldTickets ?? event.ticketsSold ?? 0;
+                    const fillRate = event.capacity > 0 ? (soldTickets / event.capacity) * 100 : 0;
                     return (
                       <tr key={event.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
-                          <Link href={`/events/${event.id}`} className="text-[#0d3b66] hover:text-[#1a5a96] font-medium">
+                          <Link href={`/events/${event.id}`} className="text-[#0569b9] hover:text-[#0A2E6E] font-semibold text-sm">
                             {event.title}
                           </Link>
                         </td>
-                        <td className="px-6 py-4 text-black text-sm">
+                        <td className="px-6 py-4 text-gray-500 text-sm">
                           {new Date(event.startDate).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4 text-black">{event.ticketsSold}</td>
-                        <td className="px-6 py-4 text-black">{event.capacity}</td>
-                        <td className="px-6 py-4 text-black font-semibold">{formatPrice(event.revenue)}</td>
+                        <td className="px-6 py-4 text-[#0A2E6E] font-medium text-sm">{soldTickets} / {event.capacity}</td>
+                        <td className="px-6 py-4 text-sm">
+                          <span className={`font-semibold ${event.checkedIn > 0 ? 'text-purple-600' : 'text-gray-400'}`}>
+                            {event.checkedIn ?? 0}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-[#0A2E6E] font-bold text-sm">{formatPrice(event.revenue)}</td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 bg-gray-200 rounded-full h-2">
+                            <div className="flex-1 bg-gray-100 rounded-full h-2">
                               <div
-                                className={`h-2 rounded-full ${fillRate >= 80 ? 'bg-green-500' : fillRate >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                                className={`h-2 rounded-full transition-all ${fillRate >= 80 ? 'bg-green-500' : fillRate >= 50 ? 'bg-yellow-500' : 'bg-red-400'}`}
                                 style={{ width: `${Math.min(fillRate, 100)}%` }}
                               />
                             </div>
-                            <span className="text-sm text-black w-12">{fillRate.toFixed(0)}%</span>
+                            <span className="text-xs text-gray-500 w-10">{fillRate.toFixed(0)}%</span>
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <Link href={`/organiser/edit-event/${event.id}`} className="text-[#0d3b66] hover:text-[#0a2f52] font-medium text-sm">Edit</Link>
+                            <Link href={`/organiser/edit-event/${event.id}`} className="text-[#0569b9] hover:text-[#0A2E6E] font-medium text-sm">Edit</Link>
                             <button
                               onClick={() => handleDeleteEvent(event.id, event.title)}
                               disabled={deletingId === event.id}
-                              className="text-red-600 hover:text-red-800 font-medium text-sm disabled:opacity-50"
+                              className="text-red-500 hover:text-red-700 font-medium text-sm disabled:opacity-50"
                             >
                               {deletingId === event.id ? 'Deleting...' : 'Delete'}
                             </button>

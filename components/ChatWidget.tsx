@@ -432,7 +432,7 @@ function ActionButton({
   let label = '';
   switch (action.type) {
     case 'NAVIGATE':
-      label = `Go to ${action.payload.path || 'page'}`;
+      label = `Go to ${action.payload.label || 'page'}`;
       break;
     case 'FILL_FORM':
       label =

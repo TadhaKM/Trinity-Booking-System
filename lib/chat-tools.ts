@@ -11,6 +11,10 @@ export const chatTools: Anthropic.Tool[] = [
           type: 'string',
           description: 'The URL path, e.g. "/search", "/events/abc123", "/organiser/dashboard"',
         },
+        label: {
+          type: 'string',
+          description: 'Short friendly label for the navigation button, e.g. "cfsdfs event page", "search results", "your tickets". Do NOT use the raw URL — use the name of what the user is going to.',
+        },
       },
       required: ['path'],
     },

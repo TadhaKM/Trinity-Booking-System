@@ -12,6 +12,7 @@ import { prisma } from '@/lib/db';
 import { generateQRCode, calculateFees, applyCoupon } from '@/lib/utils';
 import { rateLimit, getClientIp, rateLimitResponse, LIMITS } from '@/lib/rate-limit';
 import { CreateBookingSchema, zodErrors } from '@/lib/validation';
+import { createNotification, promoteNextWaitlistEntry } from '@/lib/notifications';
 
 export async function POST(request: NextRequest) {
   // ── 1. Rate limiting ────────────────────────────────────────────────────────
@@ -146,6 +147,23 @@ export async function POST(request: NextRequest) {
 
       return newOrder;
     });
+
+    // ── 9. Fire-and-forget: booking confirmation notification ─────────────────
+    createNotification(
+      userId,
+      'BOOKING_CONFIRMED',
+      'Booking confirmed!',
+      `Your booking for "${event.title}" is confirmed. View your tickets below.`,
+      '/tickets'
+    );
+
+    // ── 10. Check if any ticket types became sold out → promote waitlist ─────
+    for (const selection of ticketSelections) {
+      const tt = await prisma.ticketType.findUnique({ where: { id: selection.ticketTypeId } });
+      if (tt && tt.available === 0) {
+        promoteNextWaitlistEntry(tt.id, eventId, event.title);
+      }
+    }
 
     return NextResponse.json(order);
   } catch (error: any) {

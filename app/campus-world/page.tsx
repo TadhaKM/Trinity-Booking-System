@@ -67,19 +67,30 @@ export default function CampusWorldPage() {
         } catch {
           return;
         }
-        if (!coords) return;
+        if (
+          !coords ||
+          typeof coords.lat !== 'number' ||
+          typeof coords.lng !== 'number' ||
+          !Number.isFinite(coords.lat) ||
+          !Number.isFinite(coords.lng)
+        ) return;
 
         // Location pin marker element (SVG teardrop shape)
+        // Outer el must NOT have transforms — Mapbox positions its wrapper with transforms.
+        // We apply hover scale to an inner div to avoid conflicts.
         const el = document.createElement('div');
-        el.style.cssText = 'cursor: pointer; transition: transform 0.15s ease; transform-origin: bottom center;';
-        el.innerHTML = `
+        el.style.cssText = 'cursor: pointer; width: 32px; height: 40px;';
+        const inner = document.createElement('div');
+        inner.style.cssText = 'width: 32px; height: 40px; transition: transform 0.15s ease; transform-origin: bottom center;';
+        inner.innerHTML = `
           <svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M16 0C7.163 0 0 7.163 0 16c0 10.627 14.4 23.467 15.04 24.053a1.333 1.333 0 001.92 0C17.6 39.467 32 26.627 32 16 32 7.163 24.837 0 16 0z" fill="#0569b9"/>
             <circle cx="16" cy="16" r="6" fill="white"/>
           </svg>
         `;
-        el.addEventListener('mouseenter', () => { el.style.transform = 'scale(1.2)'; });
-        el.addEventListener('mouseleave', () => { el.style.transform = 'scale(1)'; });
+        el.appendChild(inner);
+        el.addEventListener('mouseenter', () => { inner.style.transform = 'scale(1.25)'; });
+        el.addEventListener('mouseleave', () => { inner.style.transform = 'scale(1)'; });
 
         // Rich popup card with location icon + event info
         const formattedDate = new Date(event.startDate).toLocaleDateString('en-IE', {
@@ -157,7 +168,7 @@ export default function CampusWorldPage() {
   }, [selectedEvent]);
 
   return (
-    <div className="h-[calc(100vh-6rem)] flex flex-col bg-[#EFF2F7]">
+    <div className="h-[calc(100vh-6rem)] flex flex-col bg-[#0A2E6E]">
       {/* Mapbox GL CSS */}
       <link
         rel="stylesheet"
@@ -218,14 +229,14 @@ export default function CampusWorldPage() {
         {/* Map Area */}
         <div className="flex-1 relative">
           {loading ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-[#EFF2F7]">
+            <div className="absolute inset-0 flex items-center justify-center bg-[#0A2E6E]">
               <div className="w-12 h-12 rounded-full border-4 border-[#A8EDEA]/30 border-t-[#0569b9] animate-spin" />
             </div>
           ) : HAS_TOKEN ? (
             <div ref={mapRef} className="w-full h-full" />
           ) : (
             /* Fallback iframe when no token */
-            <div className="w-full h-full flex flex-col items-center justify-center bg-[#EFF2F7] gap-4 p-8">
+            <div className="w-full h-full flex flex-col items-center justify-center bg-[#0A2E6E] gap-4 p-8">
               <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center">
                 <svg className="w-8 h-8 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -395,6 +406,37 @@ export default function CampusWorldPage() {
               )}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Bottom status bar */}
+      <div className="bg-[#0A2E6E] border-t border-white/10 px-6 py-2.5 flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-[#0569b9] ring-2 ring-white/20" />
+            <span className="text-white/60 text-xs font-medium">Event locations</span>
+          </div>
+          {selectedEvent && (
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-1 rounded-full bg-white/20" />
+              <span className="text-white/50 text-xs">
+                Viewing: <span className="text-white/80 font-semibold">{selectedEvent.title}</span>
+              </span>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          {!loading && (
+            <span className="text-white/40 text-xs font-medium">
+              {events.filter(e => e.locationCoords).length} pinned · {events.length} total
+            </span>
+          )}
+          <div className="flex items-center gap-1.5 text-white/40 text-xs">
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
+            </svg>
+            Trinity College Dublin
+          </div>
         </div>
       </div>
 

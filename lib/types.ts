@@ -52,6 +52,8 @@ export interface Ticket {
   ticketType?: TicketType;
   price: number;
   qrCode: string;
+  isRefunded?: boolean;
+  refundedAt?: string | null;
   createdAt: Date;
 }
 
@@ -62,7 +64,7 @@ export interface Order {
   event?: Event;
   tickets: Ticket[];
   totalAmount: number;
-  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'REFUNDED' | 'PARTIALLY_REFUNDED';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -116,3 +118,43 @@ export interface WeeklyUpdate {
   societyName: string;
   events: Event[];
 }
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  body: string;
+  link?: string | null;
+  read: boolean;
+  createdAt: Date;
+}
+
+export interface WaitlistEntry {
+  id: string;
+  userId: string;
+  ticketTypeId: string;
+  eventId: string;
+  position: number;
+  notified: boolean;
+  createdAt: Date;
+}
+
+export interface SavedEvent {
+  id: string;
+  userId: string;
+  eventId: string;
+  event?: Event;
+  createdAt: Date;
+}
+
+export interface CheckInLog {
+  id: string;
+  ticketId: string;
+  eventId: string;
+  scannedBy: string;
+  scannedAt: Date;
+}
+
+export type SortOption = 'date' | 'price-asc' | 'price-desc' | 'popular' | 'newest';
+export type FilterOption = 'all' | 'today' | 'this-week' | 'free';

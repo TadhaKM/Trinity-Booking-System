@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { z } from 'zod';
+import { createNotification } from '@/lib/notifications';
 
 const TransferSchema = z.object({
   senderId: z.string().min(1),
@@ -103,6 +104,17 @@ export async function POST(
         });
       }
     });
+
+    // Fire-and-forget notifications
+    const event = await prisma.event.findUnique({ where: { id: ticket.order.eventId }, select: { title: true, id: true } });
+    const eventTitle = event?.title ?? 'an event';
+    createNotification(
+      recipient.id,
+      'TICKET_RECEIVED',
+      'You received a ticket!',
+      `${ticket.ticketType.name} ticket for "${eventTitle}" has been sent to you.`,
+      '/tickets'
+    );
 
     return NextResponse.json({
       success: true,

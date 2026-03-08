@@ -36,7 +36,21 @@ export async function POST(request: NextRequest) {
       tags,
       ticketTypes,
       organiserId,
+      venueCapacity,
     } = parsed.data;
+
+    // ── 1b. Venue capacity check ─────────────────────────────────────────────
+    if (venueCapacity != null) {
+      const totalTickets = ticketTypes.reduce((sum, tt) => sum + tt.quantity, 0);
+      if (totalTickets > venueCapacity) {
+        return NextResponse.json(
+          {
+            error: `Total ticket quantity (${totalTickets}) exceeds venue capacity (${venueCapacity}). Reduce ticket quantities or increase the venue capacity.`,
+          },
+          { status: 400 }
+        );
+      }
+    }
 
     // ── 2. Verify organiser ───────────────────────────────────────────────────
     const organiser = await prisma.user.findUnique({
@@ -104,6 +118,7 @@ export async function POST(request: NextRequest) {
         imageUrl: imageUrl || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800',
         tags: tagsJson,
         organiserId,
+        venueCapacity: venueCapacity ?? null,
         ticketTypes: {
           create: ticketTypes.map((tt) => ({
             name: tt.name.trim(),

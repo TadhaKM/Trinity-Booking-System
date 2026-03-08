@@ -46,6 +46,7 @@ export default function CreateEventPage() {
     category: 'Arts & Culture',
     imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800',
     tags: '',
+    venueCapacity: '' as string | number,
   });
 
   const [ticketTypes, setTicketTypes] = useState<TicketTypeForm[]>([
@@ -275,6 +276,7 @@ export default function CreateEventPage() {
           tags: formData.tags.split(',').map((t) => t.trim()).filter(Boolean),
           ticketTypes,
           organiserId: user.id,
+          venueCapacity: formData.venueCapacity ? Number(formData.venueCapacity) : null,
         }),
       });
 
@@ -656,6 +658,33 @@ export default function CreateEventPage() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Venue Capacity */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-bold text-black mb-4">Venue Capacity</h2>
+          <div className="max-w-xs">
+            <label className="block text-sm font-medium mb-2 text-black">
+              Maximum Attendees <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={100000}
+              value={formData.venueCapacity}
+              onChange={(e) => setFormData({ ...formData, venueCapacity: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0569b9] text-black"
+              placeholder="e.g. 500"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              If set, total ticket quantity cannot exceed this number. Shown as an occupancy percentage on the event page.
+            </p>
+            {formData.venueCapacity && ticketTypes.reduce((s, t) => s + t.quantity, 0) > Number(formData.venueCapacity) && (
+              <p className="mt-2 text-sm text-red-600 font-medium">
+                Warning: total ticket quantity ({ticketTypes.reduce((s, t) => s + t.quantity, 0)}) exceeds venue capacity ({formData.venueCapacity}).
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Ticket Types */}

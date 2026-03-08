@@ -113,4 +113,20 @@ export const LIMITS = {
   CHAT: { limit: 20, windowMs: 60 * 1000 },
   /** 100 general API requests per minute per IP */
   GENERAL: { limit: 100, windowMs: 60 * 1000 },
+  /** 120 check-in scans per minute per organiser (fast door scanning) */
+  CHECKIN: { limit: 120, windowMs: 60 * 1000 },
+  /** 60 notification reads per minute per user */
+  NOTIFICATION: { limit: 60, windowMs: 60 * 1000 },
+  /** 30 waitlist joins per minute per IP */
+  WAITLIST: { limit: 30, windowMs: 60 * 1000 },
+  /** 60 save/unsave actions per minute per IP */
+  SAVE: { limit: 60, windowMs: 60 * 1000 },
+  /** 10 refund requests per hour per user (prevents abuse) */
+  REFUND: { limit: 10, windowMs: 60 * 60 * 1000 },
+  /** 30 comments per 5 minutes per user */
+  COMMENT: { limit: 30, windowMs: 5 * 60 * 1000 },
+  /** 5 push subscription changes per hour per user */
+  PUSH: { limit: 5, windowMs: 60 * 60 * 1000 },
+  /** 20 admin actions per minute */
+  ADMIN: { limit: 20, windowMs: 60 * 1000 },
 } as const;
