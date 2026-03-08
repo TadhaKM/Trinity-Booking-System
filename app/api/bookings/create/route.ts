@@ -50,6 +50,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ── Demo guardrail: max 5 orders per user ─────────────────────────────────
+    if (!user.isAdmin && !user.isOrganiser) {
+      const orderCount = await prisma.order.count({ where: { userId } });
+      if (orderCount >= 5) {
+        return NextResponse.json(
+          { error: 'Demo limit reached: you can place up to 5 orders in this demo version.' },
+          { status: 403 }
+        );
+      }
+    }
+
     // ── 4. Validate ticket availability ───────────────────────────────────────
     for (const selection of ticketSelections) {
       const ticketType = await prisma.ticketType.findUnique({

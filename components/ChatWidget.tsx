@@ -39,10 +39,17 @@ export default function ChatWidget() {
     }
   }, [isOpen]);
 
+  const DEMO_MSG_LIMIT = 8;
+
   const getGuestCount = (): number => {
     if (typeof window === 'undefined') return 0;
     return parseInt(localStorage.getItem('guest-chat-count') || '0', 10);
   };
+
+  // Count how many user messages have been sent this session
+  const userMsgCount = messages.filter((m) => m.role === 'user').length;
+  const demoLimitReached = !!user && userMsgCount >= DEMO_MSG_LIMIT;
+  const demoMsgsLeft = user ? Math.max(0, DEMO_MSG_LIMIT - userMsgCount) : null;
 
   const sendMessage = async (overrideText?: string) => {
     const text = (overrideText || input).trim();
@@ -62,6 +69,9 @@ export default function ChatWidget() {
       }
       localStorage.setItem('guest-chat-count', String(count + 1));
     }
+
+    // Demo limit (client-side guard, server also enforces)
+    if (demoLimitReached) return;
 
     addMessage({ role: 'user', content: text });
     setInput('');
@@ -142,9 +152,14 @@ export default function ChatWidget() {
             d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
           />
         </svg>
-        {messages.length > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs flex items-center justify-center font-bold">
-            {messages.filter((m) => m.role === 'assistant').length}
+        {user && demoLimitReached && (
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs flex items-center justify-center font-bold" title="Demo limit reached">
+            !
+          </span>
+        )}
+        {user && !demoLimitReached && userMsgCount > 0 && (
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#0A2E6E] rounded-full text-xs flex items-center justify-center font-bold" title={`${DEMO_MSG_LIMIT - userMsgCount} demo messages left`}>
+            {DEMO_MSG_LIMIT - userMsgCount}
           </span>
         )}
       </button>
@@ -252,6 +267,11 @@ export default function ChatWidget() {
                 Guest: {5 - getGuestCount()} messages remaining
               </p>
             )}
+            {user && (
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-2">
+                Demo: {DEMO_MSG_LIMIT} AI messages included
+              </p>
+            )}
             <div className="mt-4 flex flex-wrap gap-2 justify-center">
               {[
                 'What events are coming up?',
@@ -338,6 +358,24 @@ export default function ChatWidget() {
         </div>
       )}
 
+      {/* Demo limit — logged-in user countdown / lockout */}
+      {user && demoMsgsLeft !== null && demoMsgsLeft <= 3 && (
+        <div className={`px-3 py-2 border-t text-xs flex items-center gap-2 flex-shrink-0 ${
+          demoLimitReached
+            ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
+            : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300'
+        }`}>
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+          <span>
+            {demoLimitReached
+              ? 'Demo limit reached — that\'s all for this demo!'
+              : `${demoMsgsLeft} demo message${demoMsgsLeft === 1 ? '' : 's'} left.`}
+          </span>
+        </div>
+      )}
+
       {/* Input */}
       <div className="border-t border-gray-200 dark:border-slate-700 px-3 py-2.5 flex gap-2 items-center bg-white dark:bg-slate-800 flex-shrink-0">
         <input
@@ -346,13 +384,13 @@ export default function ChatWidget() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Type a message..."
-          disabled={isLoading}
+          placeholder={demoLimitReached ? 'Demo message limit reached' : 'Type a message...'}
+          disabled={isLoading || demoLimitReached}
           className="flex-1 text-sm px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-full focus:outline-none focus:ring-2 focus:ring-[#0569b9]/30 focus:border-[#0569b9] text-black dark:text-slate-100 dark:bg-slate-700 placeholder:text-gray-400 dark:placeholder:text-slate-500 disabled:opacity-50"
         />
         <button
           onClick={() => sendMessage()}
-          disabled={isLoading || !input.trim()}
+          disabled={isLoading || !input.trim() || demoLimitReached}
           className="w-9 h-9 rounded-full bg-[#0E73B9] text-white flex items-center justify-center hover:bg-[#0b5d94] transition disabled:opacity-40 disabled:hover:bg-[#0E73B9] flex-shrink-0"
         >
           <svg

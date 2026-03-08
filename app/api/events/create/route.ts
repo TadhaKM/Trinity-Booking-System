@@ -71,6 +71,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ── Demo guardrail: max 3 events per organiser ────────────────────────────
+    if (!organiser.isAdmin) {
+      const eventCount = await prisma.event.count({ where: { organiserId } });
+      if (eventCount >= 3) {
+        return NextResponse.json(
+          { error: 'Demo limit reached: organisers can create up to 3 events in this demo version.' },
+          { status: 403 }
+        );
+      }
+    }
+
     // ── 3. Resolve society ────────────────────────────────────────────────────
     // If societyId matches an existing society ID, use it.
     // Otherwise treat it as a name — find by name or create a new society.

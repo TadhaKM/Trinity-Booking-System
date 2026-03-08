@@ -50,9 +50,10 @@ export async function POST(request: NextRequest) {
     // ── 3. Resolve auth context from DB ──────────────────────────────────────
     const authContext = await resolveAuthContext(userId);
 
-    // ── 4. Guest message cap ──────────────────────────────────────────────────
+    // ── 4. Demo message caps ──────────────────────────────────────────────────
+    const userMessageCount = messages.filter((m) => m.role === 'user').length;
+
     if (authContext.role === 'guest') {
-      const userMessageCount = messages.filter((m) => m.role === 'user').length;
       authContext.guestMessageCount = userMessageCount;
       if (userMessageCount > 5) {
         return NextResponse.json({
@@ -61,6 +62,16 @@ export async function POST(request: NextRequest) {
           actions: [{ type: 'NAVIGATE', payload: { path: '/login' } }],
         });
       }
+    }
+
+    // Demo cap: 8 messages for logged-in users
+    const DEMO_MSG_LIMIT = 8;
+    if (authContext.role !== 'guest' && userMessageCount > DEMO_MSG_LIMIT) {
+      return NextResponse.json({
+        message:
+          "That's all for the demo version! You've used all 8 AI messages included with this demo account. In the full version, there's no limit — enjoy exploring the rest of the app!",
+        actions: [],
+      });
     }
 
     // ── 5. Build system prompt & filter tools by role ─────────────────────────
