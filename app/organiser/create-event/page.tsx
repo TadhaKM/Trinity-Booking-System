@@ -55,11 +55,16 @@ export default function CreateEventPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // AI description suggestion
+  // AI suggestions
   const [aiEnabled, setAiEnabled] = useState(true);
+  // Description
   const [suggestion, setSuggestion] = useState('');
   const [isSuggesting, setIsSuggesting] = useState(false);
   const suggestionAbort = useRef<AbortController | null>(null);
+  // Title
+  const [titleChips, setTitleChips] = useState<string[]>([]);
+  const [isSuggestingTitles, setIsSuggestingTitles] = useState(false);
+  const titleAbort = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -174,6 +179,7 @@ export default function CreateEventPage() {
             title: formData.title,
             category: formData.category,
             location: formData.location,
+            organiserId: user?.id,
           }),
           signal: suggestionAbort.current.signal,
         });
@@ -190,6 +196,56 @@ export default function CreateEventPage() {
 
     return () => clearTimeout(timer);
   }, [formData.title, formData.category, formData.location, aiEnabled]);
+
+  // AI title suggestions — fires when title or societyId changes
+  useEffect(() => {
+    if (!aiEnabled) {
+      setTitleChips([]);
+      return;
+    }
+
+    const societyObj = societies.find((s) => s.id === formData.societyId);
+    const societyName = societyObj?.name ?? formData.societyId ?? '';
+
+    // Need at least a society selected for discovery mode, or 3+ chars for refinement
+    const hasTitle = formData.title.trim().length >= 3;
+    const hasSociety = !!societyName;
+    if (!hasTitle && !hasSociety) {
+      setTitleChips([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      if (titleAbort.current) titleAbort.current.abort();
+      titleAbort.current = new AbortController();
+
+      setIsSuggestingTitles(true);
+      setTitleChips([]);
+      try {
+        const res = await fetch('/api/events/suggest-titles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: formData.title,
+            societyName,
+            category: formData.category,
+            organiserId: user?.id,
+          }),
+          signal: titleAbort.current.signal,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setTitleChips(Array.isArray(data.suggestions) ? data.suggestions : []);
+        }
+      } catch (e: any) {
+        if (e.name !== 'AbortError') console.error('[suggest-titles]', e);
+      } finally {
+        setIsSuggestingTitles(false);
+      }
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [formData.title, formData.societyId, formData.category, aiEnabled, societies]);
 
   const handleAddTicketType = () => {
     setTicketTypes([
@@ -430,6 +486,39 @@ export default function CreateEventPage() {
               />
               {errors.title && (
                 <p className="mt-1 text-sm text-red-600">{errors.title}</p>
+              )}
+
+              {/* AI title chips */}
+              {aiEnabled && (isSuggestingTitles || titleChips.length > 0) && (
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-gray-400 flex items-center gap-1">
+                    <svg className="w-3 h-3 text-[#0569b9]" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2l2.09 6.26L20 10l-5.91 1.74L12 18l-2.09-6.26L4 10l5.91-1.74z" />
+                    </svg>
+                    {formData.title.trim().length >= 3 ? 'Alternatives:' : 'Ideas:'}
+                  </span>
+                  {isSuggestingTitles ? (
+                    // Skeleton chips
+                    [1, 2, 3].map((i) => (
+                      <span key={i} className="h-6 w-28 rounded-full bg-gray-100 animate-pulse inline-block" />
+                    ))
+                  ) : (
+                    titleChips.map((chip) => (
+                      <button
+                        key={chip}
+                        type="button"
+                        onClick={() => {
+                          setFormData((prev) => ({ ...prev, title: chip }));
+                          setTitleChips([]);
+                          if (errors.title) setErrors({ ...errors, title: '' });
+                        }}
+                        className="text-xs px-3 py-1 rounded-full border border-[#0569b9]/40 text-[#0569b9] bg-[#EFF2F7] hover:bg-[#0569b9] hover:text-white hover:border-[#0569b9] transition font-medium"
+                      >
+                        {chip}
+                      </button>
+                    ))
+                  )}
+                </div>
               )}
             </div>
 
