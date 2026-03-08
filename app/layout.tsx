@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import ChatWidget from '@/components/ChatWidget';
-import DemoBanner from '@/components/DemoBanner';
 import { Toaster } from 'react-hot-toast';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 
@@ -52,7 +51,6 @@ export default function RootLayout({
       </head>
       <body>
         <ServiceWorkerRegistration />
-        <DemoBanner />
         <Navbar />
         <main className="min-h-screen">{children}</main>
         <ChatWidget />
