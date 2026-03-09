@@ -41,6 +41,17 @@ export async function POST(request: NextRequest) {
     const { email, password } = parsed.data;
     const normalizedEmail = email.trim().toLowerCase();
 
+    // ── 2b. Per-account brute-force lockout (5 failures → 15 min lock) ────────
+    // Keyed by email so rotating IPs doesn't help an attacker.
+    const accountRl = rateLimit('auth:login:account', normalizedEmail, 5, LIMITS.AUTH.windowMs);
+    if (!accountRl.success) {
+      await new Promise((r) => setTimeout(r, FAILURE_DELAY_MS));
+      return NextResponse.json(
+        { error: 'Too many failed attempts. This account is temporarily locked — please try again in 15 minutes.' },
+        { status: 429 }
+      );
+    }
+
     // ── 3. Look up user ───────────────────────────────────────────────────────
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
@@ -86,7 +97,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── 5. Return safe user payload (never include password) ──────────────────
+    // ── 5. Clear account lockout counter on successful login ──────────────────
+    // Reset by consuming the remaining slots so the window expires naturally.
+    rateLimit('auth:login:account', normalizedEmail, 5, 1); // 1ms window = instant expiry
+
+    // ── 6. Return safe user payload (never include password) ──────────────────
     return NextResponse.json({
       id: user.id,
       email: user.email,

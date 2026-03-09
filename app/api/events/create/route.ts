@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { CreateEventSchema, zodErrors } from '@/lib/validation';
+import { stripHtml } from '@/lib/sanitize';
 
 export async function POST(request: NextRequest) {
   try {
@@ -116,10 +117,14 @@ export async function POST(request: NextRequest) {
     // ── 4. Create event ───────────────────────────────────────────────────────
     const tagsJson = Array.isArray(tags) ? JSON.stringify(tags) : '[]';
 
+    // Sanitize user-supplied rich text to prevent stored XSS
+    const safeTitle = stripHtml(title.trim());
+    const safeDescription = stripHtml(description.trim());
+
     const event = await prisma.event.create({
       data: {
-        title: title.trim(),
-        description: description.trim(),
+        title: safeTitle,
+        description: safeDescription,
         societyId: resolvedSocietyId,
         startDate: new Date(startDate),
         endDate: new Date(endDate || startDate),

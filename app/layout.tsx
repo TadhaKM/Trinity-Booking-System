@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import ChatWidget from '@/components/ChatWidget';
+import CookieConsent from '@/components/CookieConsent';
 import { Toaster } from 'react-hot-toast';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 
@@ -54,6 +55,7 @@ export default function RootLayout({
         <Navbar />
         <main className="min-h-screen">{children}</main>
         <ChatWidget />
+        <CookieConsent />
         <Toaster position="top-right" />
       </body>
     </html>
