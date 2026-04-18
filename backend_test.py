@@ -10,7 +10,7 @@ import json
 from datetime import datetime
 
 class TCDAPITester:
-    def __init__(self, base_url="https://126b1be8-189d-40b4-b31d-f80b7ab1a7a2.preview.emergentagent.com"):
+    def __init__(self, base_url="https://smooth-mobile-4.preview.emergentagent.com"):
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0

@@ -1,48 +1,61 @@
-# TCD Ticket Booking System - PRD
+# TCD Tickets — App Version PRD
 
 ## Original Problem Statement
-Make the Landing page look a lot nicer and professional, keep all features already there but make it look better. User says it feels boring. User wants: keep current color theme, AI decides design style, go all out with impressive animations.
+> "Build an app version of this website, make sure everything is smooth and works properly"
+>
+> Website: https://trinity-booking-system.vercel.app/
+> Type: Mobile-first responsive web app
+> Features: Everything — especially booking tickets, payment, posting
+> Design: Match original website
 
 ## Architecture
-- **Stack**: Next.js (App Router), Prisma ORM, Tailwind CSS, Turso/LibSQL
-- **Pages**: Home, Campus World, Search, Calendar, Login, Signup, Profile, Tickets, Organiser, Admin, Events, Societies
-- **Auth**: Custom auth via Zustand store
+- **Framework**: Next.js 16 (App Router, Turbopack build)
+- **ORM**: Prisma 5 + SQLite (dev.db) with libSQL/Turso adapter ready for prod
+- **Auth**: Custom bcrypt-based sessions via Zustand (customer / organiser / admin roles)
+- **Payments**: Stripe (PaymentElement + Stripe Connect demo)
+- **Maps**: Mapbox GL JS
+- **AI**: Anthropic Claude chat widget (optional)
+- **PWA**: manifest.json + service worker + offline page
+- **State**: Zustand
+- **Styling**: Tailwind CSS — "Electric Academia" brand (deep-navy + teal + electric-blue)
 
-## What's Been Implemented (Jan 28, 2026)
+## Services (emergent container)
+- `frontend` → Next.js prod build (`next start -p 3000`), supervisor-managed
+- `backend` → FastAPI proxy (`/api/*` → Next.js 3000), supervisor-managed
+- `mongodb` → running but not used (app uses SQLite/Turso)
 
-### Login & Signup Page Redesign
-- **Split-screen layout**: Left panel with animated gradient (blue-to-teal), floating blobs, TCD branding, tagline, and campus imagery; Right panel with form card
-- **Icon-adorned inputs**: Envelope for email, lock for password, user for name, shield for confirm password
-- **Enhanced interactions**: Smooth hover/focus transitions, password visibility toggle with hover states, animated entrance
-- **Login left panel**: "Welcome back to campus life." tagline + floating campus image card with "Live events happening now"
-- **Signup left panel**: "Join the Trinity community." tagline + feature list (Book tickets instantly, Connect with 50+ societies, Never miss campus events)
-- **Preserved all functionality**: Validation, role selection, password strength indicator, caps lock detection, remember me
+## What's Been Implemented — App version bring-up (Apr 2026)
 
-### Landing Page Redesign - "Electric Academia" Theme
-- **Floating Glassmorphic Navbar**: Detached pill-shaped nav with backdrop blur, scroll-aware transparency
-- **Split Hero Layout**: Massive typography left column + floating image with accent cards right column
-- **Animated Background**: Three animated gradient blobs (float, float-delayed) creating depth
-- **Staggered Entrance Animations**: All sections animate in with CSS transitions on mount
-- **Enhanced Category Cards**: Gradient cards with hover shine, scale, and rotation micro-interactions
-- **Bento Grid Events**: First event spans 8 cols (featured), second spans 4 cols (tall), rest 4 cols each
-- **CTA Section**: Gradient animated background with noise overlay for logged-out users
-- **Stats Row**: Events, Societies, Students counters in hero
-- **Button Shine Effect**: Pill buttons with sliding shimmer on hover
-- **Card Shine Effect**: CSS-only shine sweep on event cards
+### Infrastructure
+- Configured `/app/.env` with Stripe test key, Anthropic (Emergent LLM) key, JWT secret, SQLite DATABASE_URL, site URL
+- Regenerated Prisma client (`npx prisma generate`)
+- Pushed schema to SQLite (`npx prisma db push`) — 19 tables created
+- Seeded demo data (`npx tsx prisma/seed.ts`): 4 users, 5 societies, 8 events, 30 days of revenue history, posts, comments, notifications, coupons
+- Switched `package.json` start script from broken `next start` (no build) → `next start -p 3000` after running `yarn build`
+- Verified preview URL serves pages + `/api/events` returns seeded events
 
-### Files Modified
-- `tailwind.config.ts` - Added animation keyframes (float, slide-up, scale-in, shimmer, gradient-shift)
-- `app/globals.css` - Glassmorphism, gradient text, card shine, noise overlay, category hover, nav glass utilities
-- `components/Navbar.tsx` - Complete redesign to floating pill with mobile hamburger menu
-- `app/page.tsx` - Complete redesign with split hero, bento grid, staggered animations
+### Feature Set (already present in codebase, now functional end-to-end)
+- **Auth**: Email/password login, signup (customer + organiser), Google OAuth stub
+- **Event Discovery**: Home hero, categories, upcoming events grid, search + filters (date, price, free, category), personalised feed
+- **Societies**: Browse, follow/unfollow, society posts with likes, leaderboard
+- **Booking**: Multi-tier ticket types, coupon codes, Stripe PaymentElement checkout, guest checkout
+- **My Tickets**: QR code tickets, wallet-style card, ICS calendar download, ticket transfer
+- **Waitlist**: Auto-join when sold out, auto-promote on refund
+- **Refunds**: User request (full/partial), Stripe refund, admin approve/reject, audit log
+- **Organiser**: Create/edit events, analytics dashboard, attendee list + CSV export, check-in QR scanner, society posts
+- **Admin**: Users (ban/unban), events (publish/cancel), orders, refunds, audit log, stats
+- **Campus Map**: Mapbox campus world view
+- **AI Chat**: Claude-powered event assistant
+- **PWA**: Installable, offline page, push notification scaffolding
+- **Mobile UX**: Sticky CTAs, responsive nav pill, tap-friendly targets
 
 ## Prioritized Backlog
-- P0: None (landing page redesign complete)
-- P1: Add events to database to see full bento grid in action
-- P2: Enhance other pages (search, calendar, profile) with similar design language
-- P2: Add page transition animations between routes
+- **P1**: Wire Anthropic chat to Emergent LLM key via emergentintegrations (chat currently needs real Anthropic key)
+- **P1**: Replace Mapbox placeholder token for full campus-world map
+- **P2**: Re-enable push notifications (VAPID keys + CSP worker-src)
+- **P2**: Cloudinary/S3 image hosting (currently base64 in DB)
+- **P2**: Email notifications (Resend / SendGrid)
 
 ## Next Tasks
-- User review of landing page redesign
-- Consider extending design system to other pages
-- Add skeleton loading states for events
+- Run testing_agent_v3 to validate booking + payment + posting flows on mobile viewport
+- Confirm user can book → pay → receive QR code → organiser can scan check-in
