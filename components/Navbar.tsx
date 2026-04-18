@@ -63,7 +63,6 @@ export default function Navbar() {
 
   const navItems = [
     { href: '/', label: 'Home' },
-    { href: '/campus-world', label: 'Campus World' },
     { href: '/search', label: 'Search' },
     { href: '/calendar', label: 'Calendar' },
     { href: '/societies', label: 'Societies' },

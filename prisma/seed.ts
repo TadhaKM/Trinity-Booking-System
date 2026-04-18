@@ -118,7 +118,7 @@ async function main() {
 
   const events: Ev[] = [
     {
-      id: cuid(), societyId: dramaId, organiserId: orgId,
+      id: cuid(), societyId: dramaId, organiserId: adminId,
       title: 'Hamlet — Spring Production',
       description: "Trinity Drama Society presents Shakespeare's timeless tragedy in a stunning modern adaptation. Set in a contemporary political landscape, this production reimagines Elsinore as a glass-and-steel corporate empire.\n\nRuns nightly with a Sunday matinée. Post-show talkbacks on Thursday.",
       location: 'Beckett Theatre, TCD', coords: JSON.stringify({lat:53.3441,lng:-6.2548}),
@@ -130,7 +130,7 @@ async function main() {
       tts: [{name:'Standard',price:12,quantity:120,available:87},{name:'Student Concession',price:8,quantity:60,available:34},{name:'VIP Front Row',price:25,quantity:20,available:6}],
     },
     {
-      id: cuid(), societyId: musicId, organiserId: orgId,
+      id: cuid(), societyId: musicId, organiserId: adminId,
       title: 'Trinity Orchestra — Spring Concert',
       description: "An unforgettable evening as Trinity Orchestra performs Beethoven's Symphony No. 9 alongside works by Sibelius and Ravel in the magnificent Examination Hall.\n\nGuest conductor: Dr. Aoife Ní Bhriain.",
       location: 'Examination Hall, TCD', coords: JSON.stringify({lat:53.3446,lng:-6.2542}),
@@ -142,7 +142,7 @@ async function main() {
       tts: [{name:'General Admission',price:15,quantity:200,available:143},{name:'Student',price:10,quantity:80,available:52},{name:'Premium Reserved',price:30,quantity:20,available:8}],
     },
     {
-      id: cuid(), societyId: techId, organiserId: org2Id,
+      id: cuid(), societyId: techId, organiserId: adminId,
       title: 'TCD Hackathon 2026',
       description: "48 hours. €5,000 in prizes. Build something that matters.\n\nTrinity's biggest hackathon with challenges across AI, sustainability, fintech, and social impact. Sponsored by Google, Stripe, and Accenture. Teams of 1–4. Meals and caffeine provided throughout.",
       location: "O'Reilly Institute, TCD", coords: JSON.stringify({lat:53.3435,lng:-6.2552}),
@@ -154,7 +154,7 @@ async function main() {
       tts: [{name:'Hacker Pass',price:0,quantity:120,available:67},{name:'Mentor Pass',price:0,quantity:30,available:18}],
     },
     {
-      id: cuid(), societyId: debateId, organiserId: org2Id,
+      id: cuid(), societyId: debateId, organiserId: adminId,
       title: 'The Phil — Annual Bram Stoker Debate',
       description: 'The College Historical Society\'s flagship debate. This year\'s motion: "This House Believes That Artificial Intelligence Poses an Existential Threat to Democracy."\n\nGuest speakers include a sitting TD and a leading Silicon Valley AI researcher.',
       location: 'Edmund Burke Theatre, TCD', coords: JSON.stringify({lat:53.3442,lng:-6.2536}),
@@ -165,7 +165,7 @@ async function main() {
       tts: [{name:'General',price:5,quantity:200,available:134},{name:'Student',price:0,quantity:50,available:21}],
     },
     {
-      id: cuid(), societyId: sportsId, organiserId: org2Id,
+      id: cuid(), societyId: sportsId, organiserId: adminId,
       title: 'Trinity 5K Charity Run',
       description: "Join hundreds of Trinity students and staff for our annual charity 5K through Dublin 2. All proceeds go to St. Vincent de Paul Ireland.\n\nRoute takes in Trinity's campus, Merrion Square, and St Stephen's Green. All fitness levels welcome.",
       location: 'Front Square, TCD', coords: JSON.stringify({lat:53.3439,lng:-6.2543}),
@@ -177,7 +177,7 @@ async function main() {
       tts: [{name:'Race Entry',price:10,quantity:400,available:267},{name:'Student Entry',price:6,quantity:100,available:58}],
     },
     {
-      id: cuid(), societyId: dramaId, organiserId: orgId,
+      id: cuid(), societyId: dramaId, organiserId: adminId,
       title: 'Improv Night — "No Script, No Problem"',
       description: "Trinity Drama's improv troupe takes the stage for a night of pure, unscripted comedy chaos. Audience suggestions drive the scenes.\n\nPerfect for a midweek laugh. BYOB to the post-show social in the Pav.",
       location: 'Luce Hall, TCD', coords: JSON.stringify({lat:53.3443,lng:-6.2549}),
@@ -188,7 +188,7 @@ async function main() {
       tts: [{name:'Entry',price:5,quantity:80,available:43}],
     },
     {
-      id: cuid(), societyId: techId, organiserId: org2Id,
+      id: cuid(), societyId: techId, organiserId: adminId,
       title: 'AI & Machine Learning Workshop',
       description: "A hands-on full-day workshop covering modern ML with PyTorch and HuggingFace. No prior ML experience needed — just bring a laptop.\n\nTopics: neural networks, transformer models, fine-tuning LLMs, deploying to production. Led by PhD researchers from the ADAPT Centre.",
       location: 'Lloyd Institute, TCD', coords: JSON.stringify({lat:53.3436,lng:-6.2555}),
@@ -200,7 +200,7 @@ async function main() {
       tts: [{name:'Workshop Ticket',price:8,quantity:60,available:22}],
     },
     {
-      id: cuid(), societyId: musicId, organiserId: orgId,
+      id: cuid(), societyId: musicId, organiserId: adminId,
       title: 'Jazz Night at the Pav',
       description: "Kick back in Trinity's iconic Pavilion Bar for an evening of live jazz from the Trinity Jazz Ensemble. Three sets covering Miles Davis to modern fusion.\n\nFood available from the bar. Doors at 7pm, first set at 7:30pm.",
       location: 'The Pavilion Bar, TCD', coords: JSON.stringify({lat:53.3433,lng:-6.2538}),
@@ -353,8 +353,9 @@ async function main() {
   console.log('\n✅  Seed complete!\n');
   console.log('  ───────────────────────────────────────────────────');
   console.log('  customer@tcd.ie   / demo1234   (customer)');
-  console.log('  organiser@tcd.ie  / demo1234   (organiser — Drama + Orchestra events)');
-  console.log('  admin@tcd.ie      / demo1234   (admin)');
+  console.log('  organiser@tcd.ie  / demo1234   (organiser — can create up to 3 events)');
+  console.log('  organiser2@tcd.ie / demo1234   (organiser — can create up to 3 events)');
+  console.log('  admin@tcd.ie      / demo1234   (admin — owns all seeded events)');
   console.log('  ───────────────────────────────────────────────────');
   console.log('  Coupon codes:  STUDENT20 (20% off)   TRINITY10 (10% off)');
   console.log('  8 events · 5 societies · 30 days of revenue history\n');

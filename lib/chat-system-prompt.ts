@@ -23,7 +23,6 @@ export function buildSystemPrompt(auth: AuthContext): string {
 - / — Home page with upcoming events
 - /search — Search events (supports ?query= and ?category= params)
 - /calendar — Calendar view of all events
-- /campus-world — Interactive campus map
 - /events/[id] — Event detail and booking page
 - /societies/[id] — Society page with their events
 - /tickets — User's purchased tickets (signed-in only)

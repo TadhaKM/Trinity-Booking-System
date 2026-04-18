@@ -103,12 +103,12 @@ export default function HomePage() {
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-4">
-                    <Link href="/campus-world" data-testid="hero-explore-btn" className="btn-pill bg-[#0A2E6E] text-white shadow-lg shadow-[#0A2E6E]/25 hover:shadow-xl hover:shadow-[#0A2E6E]/30 flex items-center gap-2">
-                      Explore Campus World
+                    <Link href="/search" data-testid="hero-explore-btn" className="btn-pill bg-[#0A2E6E] text-white shadow-lg shadow-[#0A2E6E]/25 hover:shadow-xl hover:shadow-[#0A2E6E]/30 flex items-center gap-2">
+                      Browse Events
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                     </Link>
-                    <Link href="/search" data-testid="hero-search-btn" className="btn-pill bg-white text-[#0A2E6E] border-2 border-[#0A2E6E]/10 hover:border-[#1A6FEF]/30 shadow-md">
-                      Search Events
+                    <Link href="/societies" data-testid="hero-search-btn" className="btn-pill bg-white text-[#0A2E6E] border-2 border-[#0A2E6E]/10 hover:border-[#1A6FEF]/30 shadow-md">
+                      Societies
                     </Link>
                   </div>
                 </>
